@@ -5,6 +5,10 @@ import posRoutes from './pos.routes.js';
 import inventoryRoutes from './inventory.routes.js';
 import customerRoutes from './customer.routes.js';
 import mpesaRoutes from './mpesa.routes.js';
+import userRoutes from './user.routes.js';
+import branchRoutes from './branch.routes.js';
+import supplierRoutes from './supplier.routes.js';
+import reportRoutes from './report.routes.js';
 
 const router = express.Router();
 
@@ -28,14 +32,14 @@ router.use('/pos', posRoutes);
 router.use('/inventory', inventoryRoutes);
 router.use('/customers', customerRoutes);
 router.use('/mpesa', mpesaRoutes);
+router.use('/users', userRoutes);
+router.use('/branches', branchRoutes);
+router.use('/suppliers', supplierRoutes);
+router.use('/reports', reportRoutes);
 
 // Additional routes to be added:
-// router.use('/users', userRoutes);
-// router.use('/branches', branchRoutes);
-// router.use('/suppliers', supplierRoutes);
 // router.use('/purchases', purchaseRoutes);
 // router.use('/expenses', expenseRoutes);
-// router.use('/reports', reportRoutes);
 // router.use('/roles', roleRoutes);
 // router.use('/settings', settingRoutes);
 
