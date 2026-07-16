@@ -8,6 +8,7 @@ import { POSLayout } from '@layouts/POSLayout';
 import { LoginPage } from '@pages/auth/LoginPage';
 import { RegisterPage } from '@pages/auth/RegisterPage';
 import { ForgotPasswordPage } from '@pages/auth/ForgotPasswordPage';
+import { LandingPage } from '@pages/public/LandingPage';
 
 // Dashboard Pages
 import { DashboardPage } from '@pages/dashboard/DashboardPage';
@@ -26,7 +27,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/dashboard" replace />,
+    element: <LandingPage />,
   },
   {
     path: '/auth',
