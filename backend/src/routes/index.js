@@ -9,6 +9,11 @@ import userRoutes from './user.routes.js';
 import branchRoutes from './branch.routes.js';
 import supplierRoutes from './supplier.routes.js';
 import reportRoutes from './report.routes.js';
+import insightsRoutes from './insights.routes.js';
+import analyticsRoutes from './analytics.routes.js';
+import searchRoutes from './search.routes.js';
+import widgetsRoutes from './widgets.routes.js';
+import reviewsRoutes from './reviews.routes.js';
 
 const router = express.Router();
 
@@ -36,6 +41,13 @@ router.use('/users', userRoutes);
 router.use('/branches', branchRoutes);
 router.use('/suppliers', supplierRoutes);
 router.use('/reports', reportRoutes);
+
+// New feature routes
+router.use('/insights', insightsRoutes);
+router.use('/analytics', analyticsRoutes);
+router.use('/search', searchRoutes);
+router.use('/widgets', widgetsRoutes);
+router.use('/reviews', reviewsRoutes);
 
 // Additional routes to be added:
 // router.use('/purchases', purchaseRoutes);
