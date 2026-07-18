@@ -14,6 +14,8 @@ import analyticsRoutes from './analytics.routes.js';
 import searchRoutes from './search.routes.js';
 import widgetsRoutes from './widgets.routes.js';
 import reviewsRoutes from './reviews.routes.js';
+import loyaltyRoutes from './loyalty.routes.js';
+import promotionsRoutes from './promotions.routes.js';
 
 const router = express.Router();
 
@@ -48,6 +50,8 @@ router.use('/analytics', analyticsRoutes);
 router.use('/search', searchRoutes);
 router.use('/widgets', widgetsRoutes);
 router.use('/reviews', reviewsRoutes);
+router.use('/loyalty', loyaltyRoutes);
+router.use('/promotions', promotionsRoutes);
 
 // Additional routes to be added:
 // router.use('/purchases', purchaseRoutes);
