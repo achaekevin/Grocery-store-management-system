@@ -9,6 +9,12 @@ yarn.lock
 .env.local
 .env.*.local
 
+# Credentials and sensitive files
+CREDENTIALS.txt
+credentials.txt
+*.credentials
+secrets.txt
+
 # IDE and Editor files
 .vscode/
 .idea/
