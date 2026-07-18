@@ -19,6 +19,8 @@ import promotionsRoutes from './promotions.routes.js';
 import stockTransferRoutes from './stockTransfer.routes.js';
 import purchaseOrderRoutes from './purchaseOrder.routes.js';
 import purchaseRequestRoutes from './purchaseRequest.routes.js';
+import financialRoutes from './financial.routes.js';
+import auditRoutes from './audit.routes.js';
 
 const router = express.Router();
 
@@ -60,6 +62,10 @@ router.use('/promotions', promotionsRoutes);
 router.use('/stock-transfers', stockTransferRoutes);
 router.use('/purchase-orders', purchaseOrderRoutes);
 router.use('/purchase-requests', purchaseRequestRoutes);
+
+// Financial and audit routes
+router.use('/financial', financialRoutes);
+router.use('/audit', auditRoutes);
 
 // Additional routes to be added:
 // router.use('/expenses', expenseRoutes);
