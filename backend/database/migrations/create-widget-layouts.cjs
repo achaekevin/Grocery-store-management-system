@@ -2,7 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('search_history', {
+    await queryInterface.createTable('widget_layouts', {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
@@ -28,39 +28,18 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
-      query: {
-        type: Sequelize.STRING(500),
+      name: {
+        type: Sequelize.STRING(255),
         allowNull: false,
       },
-      search_type: {
-        type: Sequelize.ENUM(
-          'product',
-          'customer',
-          'supplier',
-          'user',
-          'order',
-          'branch',
-          'category',
-          'transaction',
-          'all'
-        ),
-        defaultValue: 'all',
+      is_default: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
       },
-      result_count: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0,
-      },
-      clicked_result_id: {
-        type: Sequelize.UUID,
-        allowNull: true,
-      },
-      clicked_result_type: {
-        type: Sequelize.STRING(50),
-        allowNull: true,
-      },
-      filters: {
+      layout: {
         type: Sequelize.JSONB,
-        allowNull: true,
+        allowNull: false,
+        comment: 'Stores widget positions, sizes, and configuration',
       },
       created_at: {
         type: Sequelize.DATE,
@@ -72,14 +51,17 @@ module.exports = {
         allowNull: false,
         defaultValue: Sequelize.NOW,
       },
+      deleted_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
     });
 
-    await queryInterface.addIndex('search_history', ['tenant_id', 'user_id']);
-    await queryInterface.addIndex('search_history', ['search_type']);
-    await queryInterface.addIndex('search_history', ['created_at']);
+    await queryInterface.addIndex('widget_layouts', ['tenant_id', 'user_id']);
+    await queryInterface.addIndex('widget_layouts', ['is_default']);
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('search_history');
+    await queryInterface.dropTable('widget_layouts');
   },
 };
