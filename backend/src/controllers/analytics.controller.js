@@ -1,6 +1,6 @@
 import AnalyticsData from '../models/AnalyticsData.js';
 import { Op } from 'sequelize';
-import sequelize from '../config/database.js';
+import sequelize from '../config/sequelize.js';
 
 // Get analytics data
 export const getAnalytics = async (req, res) => {

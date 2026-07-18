@@ -2,7 +2,7 @@ import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import Customer from '../models/Customer.js';
 import Payment from '../models/Payment.js';
-import sequelize from '../config/database.js';
+import sequelize from '../config/sequelize.js';
 import cacheService from './cache.service.js';
 import { Op } from 'sequelize';
 

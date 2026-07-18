@@ -1,6 +1,6 @@
 import Order from '../models/Order.js';
 import Payment from '../models/Payment.js';
-import sequelize from '../config/database.js';
+import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 
 // Get income summary

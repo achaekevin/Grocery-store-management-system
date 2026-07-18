@@ -4,7 +4,7 @@ import Customer from '../models/Customer.js';
 import Supplier from '../models/Supplier.js';
 import Inventory from '../models/Inventory.js';
 import PurchaseOrder from '../models/PurchaseOrder.js';
-import sequelize from '../config/database.js';
+import sequelize from '../config/sequelize.js';
 import cacheService from '../services/cache.service.js';
 import { Op } from 'sequelize';
 

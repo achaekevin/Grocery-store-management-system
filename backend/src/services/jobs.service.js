@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import Inventory from '../models/Inventory.js';
 import Product from '../models/Product.js';
 import notificationService from './notification.service.js';
-import sequelize from '../config/database.js';
+import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 
 class JobsService {

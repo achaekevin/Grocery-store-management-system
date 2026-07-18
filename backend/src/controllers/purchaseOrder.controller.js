@@ -4,7 +4,7 @@ import InventoryTransaction from '../models/InventoryTransaction.js';
 import Inventory from '../models/Inventory.js';
 import Product from '../models/Product.js';
 import Supplier from '../models/Supplier.js';
-import sequelize from '../config/database.js';
+import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 
 // Create purchase order from request

@@ -1,6 +1,6 @@
 import PurchaseRequest from '../models/PurchaseRequest.js';
 import Product from '../models/Product.js';
-import sequelize from '../config/database.js';
+import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 
 // Create purchase request

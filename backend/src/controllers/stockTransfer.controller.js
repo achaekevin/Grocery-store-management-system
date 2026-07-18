@@ -3,7 +3,7 @@ import InventoryTransaction from '../models/InventoryTransaction.js';
 import Inventory from '../models/Inventory.js';
 import Product from '../models/Product.js';
 import Branch from '../models/Branch.js';
-import sequelize from '../config/database.js';
+import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 
 // Create stock transfer request

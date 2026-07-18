@@ -1,5 +1,5 @@
 import Activity from '../models/Activity.js';
-import sequelize from '../config/database.js';
+import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 
 // Log activity

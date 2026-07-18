@@ -1,30 +1,11 @@
 import { Sequelize } from 'sequelize';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import databaseConfig from '../config/database.js';
+import sequelize from '../config/sequelize.js';
 import logger from '../config/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-const env = process.env.NODE_ENV || 'development';
-const config = databaseConfig[env];
-
-// Initialize Sequelize
-const sequelize = new Sequelize(
-  config.database,
-  config.username,
-  config.password,
-  {
-    host: config.host,
-    port: config.port,
-    dialect: config.dialect,
-    logging: config.logging,
-    pool: config.pool,
-    define: config.define,
-    dialectOptions: config.dialectOptions,
-  }
-);
 
 // Test connection
 const testConnection = async () => {
