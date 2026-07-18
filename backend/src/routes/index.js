@@ -16,6 +16,9 @@ import widgetsRoutes from './widgets.routes.js';
 import reviewsRoutes from './reviews.routes.js';
 import loyaltyRoutes from './loyalty.routes.js';
 import promotionsRoutes from './promotions.routes.js';
+import stockTransferRoutes from './stockTransfer.routes.js';
+import purchaseOrderRoutes from './purchaseOrder.routes.js';
+import purchaseRequestRoutes from './purchaseRequest.routes.js';
 
 const router = express.Router();
 
@@ -53,8 +56,12 @@ router.use('/reviews', reviewsRoutes);
 router.use('/loyalty', loyaltyRoutes);
 router.use('/promotions', promotionsRoutes);
 
+// Purchase and inventory management routes
+router.use('/stock-transfers', stockTransferRoutes);
+router.use('/purchase-orders', purchaseOrderRoutes);
+router.use('/purchase-requests', purchaseRequestRoutes);
+
 // Additional routes to be added:
-// router.use('/purchases', purchaseRoutes);
 // router.use('/expenses', expenseRoutes);
 // router.use('/roles', roleRoutes);
 // router.use('/settings', settingRoutes);
