@@ -1,4 +1,4 @@
-import redis from '../config/redis.js';
+import redisClient from '../config/redis.js';
 
 class CacheService {
   constructor() {
@@ -10,8 +10,8 @@ class CacheService {
    */
   async get(key) {
     try {
-      const data = await redis.get(key);
-      return data ? JSON.parse(data) : null;
+      if (!redisClient.isConnected) return null;
+      return await redisClient.get(key);
     } catch (error) {
       console.error('Cache get error:', error);
       return null;
@@ -23,8 +23,8 @@ class CacheService {
    */
   async set(key, value, ttl = this.defaultTTL) {
     try {
-      await redis.set(key, JSON.stringify(value), 'EX', ttl);
-      return true;
+      if (!redisClient.isConnected) return false;
+      return await redisClient.set(key, value, ttl);
     } catch (error) {
       console.error('Cache set error:', error);
       return false;
@@ -36,8 +36,8 @@ class CacheService {
    */
   async del(key) {
     try {
-      await redis.del(key);
-      return true;
+      if (!redisClient.isConnected) return false;
+      return await redisClient.del(key);
     } catch (error) {
       console.error('Cache delete error:', error);
       return false;
@@ -49,11 +49,8 @@ class CacheService {
    */
   async delPattern(pattern) {
     try {
-      const keys = await redis.keys(pattern);
-      if (keys.length > 0) {
-        await redis.del(...keys);
-      }
-      return true;
+      if (!redisClient.isConnected) return false;
+      return await redisClient.deletePattern(pattern);
     } catch (error) {
       console.error('Cache delete pattern error:', error);
       return false;
@@ -65,7 +62,9 @@ class CacheService {
    */
   async exists(key) {
     try {
-      return await redis.exists(key);
+      if (!redisClient.isConnected) return false;
+      const result = await redisClient.client.exists(key);
+      return result === 1;
     } catch (error) {
       console.error('Cache exists error:', error);
       return false;

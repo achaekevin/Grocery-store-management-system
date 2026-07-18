@@ -1,6 +1,23 @@
 import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
-import { redisClient } from '../config/redis.js';
+import redisClient from '../config/redis.js';
+
+/**
+ * Get Redis store if connected
+ */
+const getRedisStore = (prefix) => {
+  try {
+    if (redisClient.isConnected) {
+      return new RedisStore({
+        sendCommand: (...args) => redisClient.client.sendCommand(args),
+        prefix,
+      });
+    }
+  } catch (error) {
+    console.warn('Redis store not available, using memory store:', error.message);
+  }
+  return undefined;
+};
 
 /**
  * General rate limiter
@@ -12,12 +29,7 @@ export const generalLimiter = rateLimit({
   message: 'Too many requests from this IP, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
-  store: redisClient
-    ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:general:',
-      })
-    : undefined,
+  store: getRedisStore('rl:general:'),
 });
 
 /**
@@ -31,12 +43,7 @@ export const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
-  store: redisClient
-    ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:auth:',
-      })
-    : undefined,
+  store: getRedisStore('rl:auth:'),
 });
 
 /**
@@ -49,12 +56,7 @@ export const apiLimiter = rateLimit({
   message: 'API rate limit exceeded, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
-  store: redisClient
-    ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:api:',
-      })
-    : undefined,
+  store: getRedisStore('rl:api:'),
 });
 
 /**
@@ -67,12 +69,7 @@ export const mpesaLimiter = rateLimit({
   message: 'Too many M-Pesa requests, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
-  store: redisClient
-    ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:mpesa:',
-      })
-    : undefined,
+  store: getRedisStore('rl:mpesa:'),
 });
 
 export default {

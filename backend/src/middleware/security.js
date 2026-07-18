@@ -1,5 +1,5 @@
 import rateLimit from 'express-rate-limit';
-import redis from '../config/redis.js';
+import redisClient from '../config/redis.js';
 
 /**
  * General rate limiter
@@ -28,13 +28,13 @@ export const authLimiter = rateLimit({
 export const checkAccountLockout = async (req, res, next) => {
   try {
     const { email } = req.body;
-    if (!email) return next();
+    if (!email || !redisClient.isConnected) return next();
 
     const lockoutKey = `lockout:${email}`;
     const attemptsKey = `attempts:${email}`;
 
     // Check if account is locked
-    const isLocked = await redis.get(lockoutKey);
+    const isLocked = await redisClient.get(lockoutKey);
     if (isLocked) {
       return res.status(423).json({
         success: false,
@@ -43,12 +43,13 @@ export const checkAccountLockout = async (req, res, next) => {
     }
 
     // Get failed attempts
-    const attempts = parseInt(await redis.get(attemptsKey) || '0');
+    const attemptsData = await redisClient.get(attemptsKey);
+    const attempts = attemptsData ? parseInt(attemptsData) : 0;
 
     // If 5 or more failed attempts, lock account for 30 minutes
     if (attempts >= 5) {
-      await redis.set(lockoutKey, '1', 'EX', 1800); // 30 minutes
-      await redis.del(attemptsKey);
+      await redisClient.set(lockoutKey, '1', 1800); // 30 minutes
+      await redisClient.del(attemptsKey);
       
       return res.status(423).json({
         success: false,
@@ -68,9 +69,12 @@ export const checkAccountLockout = async (req, res, next) => {
  */
 export const trackFailedLogin = async (email) => {
   try {
+    if (!redisClient.isConnected) return;
+    
     const attemptsKey = `attempts:${email}`;
-    const attempts = parseInt(await redis.get(attemptsKey) || '0');
-    await redis.set(attemptsKey, attempts + 1, 'EX', 900); // 15 minutes
+    const attemptsData = await redisClient.get(attemptsKey);
+    const attempts = attemptsData ? parseInt(attemptsData) : 0;
+    await redisClient.set(attemptsKey, attempts + 1, 900); // 15 minutes
   } catch (error) {
     console.error('Track failed login error:', error);
   }
@@ -81,8 +85,10 @@ export const trackFailedLogin = async (email) => {
  */
 export const clearFailedLogins = async (email) => {
   try {
+    if (!redisClient.isConnected) return;
+    
     const attemptsKey = `attempts:${email}`;
-    await redis.del(attemptsKey);
+    await redisClient.del(attemptsKey);
   } catch (error) {
     console.error('Clear failed logins error:', error);
   }
