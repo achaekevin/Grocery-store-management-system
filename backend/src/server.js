@@ -50,11 +50,11 @@ const startServer = async () => {
     await db.initModels();
     logger.info('Models initialized with associations');
 
-    // Sync database (development only)
-    if (config.env === 'development') {
-      await db.sequelize.sync({ alter: false });
-      logger.info('Database synced');
-    }
+    // Sync database (development only) - Disabled, use migrations instead
+    // if (config.env === 'development') {
+    //   await db.sequelize.sync({ alter: false });
+    //   logger.info('Database synced');
+    // }
 
     // Initialize Redis (optional)
     try {

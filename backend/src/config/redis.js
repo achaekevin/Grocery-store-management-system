@@ -6,6 +6,7 @@ class RedisClient {
   constructor() {
     this.client = null;
     this.isConnected = false;
+    this.errorLogged = false;
   }
 
   async connect() {
@@ -14,13 +15,18 @@ class RedisClient {
         socket: {
           host: config.redis.host,
           port: config.redis.port,
+          reconnectStrategy: false, // Disable auto-reconnect
         },
         password: config.redis.password || undefined,
         database: config.redis.db,
       });
 
       this.client.on('error', (err) => {
-        logger.error('Redis Client Error:', err);
+        // Silently log once, don't spam
+        if (!this.errorLogged) {
+          logger.warn('Redis unavailable - continuing without cache');
+          this.errorLogged = true;
+        }
         this.isConnected = false;
       });
 
@@ -31,18 +37,23 @@ class RedisClient {
       this.client.on('ready', () => {
         logger.info('Redis client connected and ready');
         this.isConnected = true;
+        this.errorLogged = false;
       });
 
       this.client.on('end', () => {
-        logger.warn('Redis client disconnected');
+        if (this.isConnected) {
+          logger.warn('Redis client disconnected');
+        }
         this.isConnected = false;
       });
 
       await this.client.connect();
       return this.client;
     } catch (error) {
-      logger.error('Failed to connect to Redis:', error);
-      throw error;
+      logger.warn('Redis not available - continuing without cache');
+      this.isConnected = false;
+      this.client = null;
+      return null;
     }
   }
 
