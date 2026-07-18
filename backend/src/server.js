@@ -3,6 +3,7 @@ import config from './config/index.js';
 import logger from './config/logger.js';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import db from './models/index.js';
 
 // Create HTTP server
 const server = http.createServer(app);
