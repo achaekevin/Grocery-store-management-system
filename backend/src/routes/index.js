@@ -21,6 +21,9 @@ import purchaseOrderRoutes from './purchaseOrder.routes.js';
 import purchaseRequestRoutes from './purchaseRequest.routes.js';
 import financialRoutes from './financial.routes.js';
 import auditRoutes from './audit.routes.js';
+import dashboardRoutes from './dashboard.routes.js';
+import advancedSearchRoutes from './advancedSearch.routes.js';
+import analyticsEnhancedRoutes from './analyticsEnhanced.routes.js';
 
 const router = express.Router();
 
@@ -66,6 +69,11 @@ router.use('/purchase-requests', purchaseRequestRoutes);
 // Financial and audit routes
 router.use('/financial', financialRoutes);
 router.use('/audit', auditRoutes);
+
+// Dashboard and analytics
+router.use('/dashboard', dashboardRoutes);
+router.use('/advanced-search', advancedSearchRoutes);
+router.use('/analytics-enhanced', analyticsEnhancedRoutes);
 
 // Additional routes to be added:
 // router.use('/expenses', expenseRoutes);
