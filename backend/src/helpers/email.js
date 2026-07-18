@@ -3,15 +3,28 @@ import config from '../config/index.js';
 import logger from '../config/logger.js';
 
 // Create reusable transporter
-const transporter = nodemailer.createTransporter({
-  host: config.email.host,
-  port: config.email.port,
-  secure: config.email.port === 465,
-  auth: {
-    user: config.email.user,
-    pass: config.email.password,
-  },
-});
+let transporter = null;
+
+// Initialize transporter lazily
+const getTransporter = () => {
+  if (!transporter) {
+    try {
+      transporter = nodemailer.createTransporter({
+        host: config.email?.host || 'smtp.gmail.com',
+        port: config.email?.port || 587,
+        secure: config.email?.port === 465,
+        auth: {
+          user: config.email?.user,
+          pass: config.email?.password,
+        },
+      });
+    } catch (error) {
+      logger.warn('Email transporter not configured:', error.message);
+      transporter = null;
+    }
+  }
+  return transporter;
+};
 
 // Email templates
 const templates = {
@@ -90,6 +103,12 @@ const templates = {
  */
 export const sendEmail = async ({ to, subject, template, data, html, text }) => {
   try {
+    const trans = getTransporter();
+    if (!trans) {
+      logger.warn('Email not sent: transporter not configured');
+      return { success: false, error: 'Email not configured' };
+    }
+
     // Use template if provided
     let emailContent = { subject, html, text };
 
@@ -101,14 +120,14 @@ export const sendEmail = async ({ to, subject, template, data, html, text }) => 
     }
 
     const mailOptions = {
-      from: `"${config.email.from}" <${config.email.user}>`,
+      from: `"${config.email?.from || 'GroceryOS'}" <${config.email?.user}>`,
       to,
       subject: emailContent.subject || subject,
       html: emailContent.html || html,
       text: emailContent.text || text,
     };
 
-    const info = await transporter.sendMail(mailOptions);
+    const info = await trans.sendMail(mailOptions);
 
     logger.info(`Email sent: ${info.messageId}`);
 
@@ -118,7 +137,7 @@ export const sendEmail = async ({ to, subject, template, data, html, text }) => 
     };
   } catch (error) {
     logger.error('Email sending error:', error);
-    throw error;
+    return { success: false, error: error.message };
   }
 };
 
@@ -145,7 +164,12 @@ export const sendBulkEmails = async (emails) => {
  */
 export const verifyEmailConfig = async () => {
   try {
-    await transporter.verify();
+    const trans = getTransporter();
+    if (!trans) {
+      logger.warn('Email not configured');
+      return false;
+    }
+    await trans.verify();
     logger.info('Email configuration verified successfully');
     return true;
   } catch (error) {
