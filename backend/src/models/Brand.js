@@ -1,58 +1,57 @@
-import { Model, DataTypes } from 'sequelize';
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
 
-class Brand extends Model {
-  static associate(models) {
-    Brand.hasMany(models.Product, {
-      foreignKey: 'brandId',
-      as: 'products',
-    });
-  }
-}
-
-export default (sequelize) => {
-  Brand.init(
+const Brand = sequelize.define('Brand', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  tenantId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    field: 'tenant_id',
+  },
+  name: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+  },
+  slug: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  logo: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+  },
+  website: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    field: 'is_active',
+  },
+  metadata: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+  },
+}, {
+  tableName: 'brands',
+  underscored: true,
+  paranoid: true,
+  timestamps: true,
+  indexes: [
     {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      name: {
-        type: DataTypes.STRING(100),
-        allowNull: false,
-        unique: true,
-      },
-      description: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      logo: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-      },
-      status: {
-        type: DataTypes.ENUM('active', 'inactive'),
-        defaultValue: 'active',
-      },
-      createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        field: 'created_at',
-      },
-      updatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        field: 'updated_at',
-      },
+      fields: ['tenant_id', 'slug'],
+      unique: true,
     },
-    {
-      sequelize,
-      modelName: 'Brand',
-      tableName: 'brands',
-      timestamps: true,
-      underscored: true,
-    }
-  );
+  ],
+});
 
-  return Brand;
-};
+export default Brand;

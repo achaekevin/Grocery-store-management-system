@@ -1,50 +1,61 @@
-import { Model, DataTypes } from 'sequelize';
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
 
-class Unit extends Model {
-  static associate(models) {
-    Unit.hasMany(models.Product, {
-      foreignKey: 'unitId',
-      as: 'products',
-    });
-  }
-}
-
-export default (sequelize) => {
-  Unit.init(
+const Unit = sequelize.define('Unit', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  tenantId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    field: 'tenant_id',
+  },
+  name: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+  },
+  shortName: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    field: 'short_name',
+  },
+  baseUnit: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'base_unit',
+    comment: 'Reference to base unit for conversion',
+  },
+  conversionFactor: {
+    type: DataTypes.DECIMAL(10, 4),
+    allowNull: true,
+    field: 'conversion_factor',
+    comment: 'Multiplier to convert to base unit',
+  },
+  type: {
+    type: DataTypes.ENUM('weight', 'volume', 'length', 'piece', 'other'),
+    defaultValue: 'piece',
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    field: 'is_active',
+  },
+}, {
+  tableName: 'units',
+  underscored: true,
+  timestamps: true,
+  paranoid: false,
+  indexes: [
     {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      name: {
-        type: DataTypes.STRING(50),
-        allowNull: false,
-        unique: true,
-      },
-      abbreviation: {
-        type: DataTypes.STRING(10),
-        allowNull: false,
-      },
-      createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        field: 'created_at',
-      },
-      updatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        field: 'updated_at',
-      },
+      fields: ['tenant_id', 'short_name'],
+      unique: true,
     },
-    {
-      sequelize,
-      modelName: 'Unit',
-      tableName: 'units',
-      timestamps: true,
-      underscored: true,
-    }
-  );
+  ],
+});
 
-  return Unit;
-};
+// Self-referencing for base unit
+Unit.belongsTo(Unit, { as: 'base', foreignKey: 'baseUnit' });
+
+export default Unit;

@@ -1,198 +1,160 @@
-import { Model, DataTypes } from 'sequelize';
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
 
-class PurchaseOrder extends Model {
-  static associate(models) {
-    // PurchaseOrder belongs to Business
-    PurchaseOrder.belongsTo(models.Business, {
-      foreignKey: 'businessId',
-      as: 'business',
-    });
-
-    // PurchaseOrder belongs to Branch
-    PurchaseOrder.belongsTo(models.Branch, {
-      foreignKey: 'branchId',
-      as: 'branch',
-    });
-
-    // PurchaseOrder belongs to Supplier
-    PurchaseOrder.belongsTo(models.Supplier, {
-      foreignKey: 'supplierId',
-      as: 'supplier',
-    });
-
-    // PurchaseOrder belongs to User (created by)
-    PurchaseOrder.belongsTo(models.User, {
-      foreignKey: 'createdBy',
-      as: 'creator',
-    });
-
-    // PurchaseOrder has many PurchaseItems
-    PurchaseOrder.hasMany(models.PurchaseItem, {
-      foreignKey: 'purchaseOrderId',
-      as: 'items',
-    });
-  }
-}
-
-export default (sequelize) => {
-  PurchaseOrder.init(
+const PurchaseOrder = sequelize.define('PurchaseOrder', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
+  },
+  tenantId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    field: 'tenant_id',
+  },
+  branchId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    field: 'branch_id',
+  },
+  poNumber: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true,
+    field: 'po_number',
+  },
+  supplierId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    field: 'supplier_id',
+  },
+  status: {
+    type: DataTypes.ENUM(
+      'draft',
+      'pending_approval',
+      'approved',
+      'sent_to_supplier',
+      'partially_received',
+      'received',
+      'cancelled',
+      'closed'
+    ),
+    defaultValue: 'draft',
+  },
+  items: {
+    type: DataTypes.JSONB,
+    allowNull: false,
+    comment: 'Array of {productId, variantId, quantity, unitCost, total}',
+  },
+  subtotal: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: false,
+  },
+  taxAmount: {
+    type: DataTypes.DECIMAL(15, 2),
+    defaultValue: 0,
+    field: 'tax_amount',
+  },
+  discountAmount: {
+    type: DataTypes.DECIMAL(15, 2),
+    defaultValue: 0,
+    field: 'discount_amount',
+  },
+  shippingCost: {
+    type: DataTypes.DECIMAL(15, 2),
+    defaultValue: 0,
+    field: 'shipping_cost',
+  },
+  total: {
+    type: DataTypes.DECIMAL(15, 2),
+    allowNull: false,
+  },
+  paymentTerms: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    field: 'payment_terms',
+  },
+  paymentStatus: {
+    type: DataTypes.ENUM('unpaid', 'partially_paid', 'paid'),
+    defaultValue: 'unpaid',
+    field: 'payment_status',
+  },
+  paidAmount: {
+    type: DataTypes.DECIMAL(15, 2),
+    defaultValue: 0,
+    field: 'paid_amount',
+  },
+  expectedDeliveryDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'expected_delivery_date',
+  },
+  actualDeliveryDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'actual_delivery_date',
+  },
+  createdBy: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    field: 'created_by',
+  },
+  approvedBy: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'approved_by',
+  },
+  receivedBy: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'received_by',
+  },
+  approvedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'approved_at',
+  },
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  internalNotes: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'internal_notes',
+  },
+  attachments: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    comment: 'Array of file paths/URLs',
+  },
+  metadata: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+  },
+}, {
+  tableName: 'purchase_orders',
+  underscored: true,
+  timestamps: true,
+  paranoid: true,
+  indexes: [
     {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      businessId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        field: 'business_id',
-        references: {
-          model: 'businesses',
-          key: 'id',
-        },
-      },
-      branchId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        field: 'branch_id',
-        references: {
-          model: 'branches',
-          key: 'id',
-        },
-      },
-      supplierId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        field: 'supplier_id',
-        references: {
-          model: 'suppliers',
-          key: 'id',
-        },
-      },
-      createdBy: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        field: 'created_by',
-        references: {
-          model: 'users',
-          key: 'id',
-        },
-      },
-      orderNumber: {
-        type: DataTypes.STRING(50),
-        allowNull: false,
-        unique: true,
-        field: 'order_number',
-      },
-      orderDate: {
-        type: DataTypes.DATEONLY,
-        allowNull: false,
-        field: 'order_date',
-      },
-      expectedDeliveryDate: {
-        type: DataTypes.DATEONLY,
-        allowNull: true,
-        field: 'expected_delivery_date',
-      },
-      actualDeliveryDate: {
-        type: DataTypes.DATEONLY,
-        allowNull: true,
-        field: 'actual_delivery_date',
-      },
-      subtotal: {
-        type: DataTypes.DECIMAL(15, 2),
-        allowNull: false,
-        defaultValue: 0.00,
-      },
-      tax: {
-        type: DataTypes.DECIMAL(15, 2),
-        allowNull: false,
-        defaultValue: 0.00,
-      },
-      discount: {
-        type: DataTypes.DECIMAL(15, 2),
-        allowNull: false,
-        defaultValue: 0.00,
-      },
-      shippingCost: {
-        type: DataTypes.DECIMAL(15, 2),
-        allowNull: false,
-        defaultValue: 0.00,
-        field: 'shipping_cost',
-      },
-      total: {
-        type: DataTypes.DECIMAL(15, 2),
-        allowNull: false,
-        defaultValue: 0.00,
-      },
-      amountPaid: {
-        type: DataTypes.DECIMAL(15, 2),
-        allowNull: false,
-        defaultValue: 0.00,
-        field: 'amount_paid',
-      },
-      status: {
-        type: DataTypes.ENUM('pending', 'approved', 'ordered', 'partially_received', 'received', 'cancelled'),
-        defaultValue: 'pending',
-      },
-      paymentStatus: {
-        type: DataTypes.ENUM('unpaid', 'partial', 'paid'),
-        defaultValue: 'unpaid',
-        field: 'payment_status',
-      },
-      notes: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        field: 'created_at',
-      },
-      updatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        field: 'updated_at',
-      },
-      deletedAt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        field: 'deleted_at',
-      },
+      fields: ['tenant_id', 'branch_id'],
     },
     {
-      sequelize,
-      modelName: 'PurchaseOrder',
-      tableName: 'purchase_orders',
-      timestamps: true,
-      paranoid: true,
-      underscored: true,
-      indexes: [
-        {
-          unique: true,
-          fields: ['order_number'],
-        },
-        {
-          fields: ['business_id'],
-        },
-        {
-          fields: ['branch_id'],
-        },
-        {
-          fields: ['supplier_id'],
-        },
-        {
-          fields: ['status'],
-        },
-        {
-          fields: ['payment_status'],
-        },
-        {
-          fields: ['order_date'],
-        },
-      ],
-    }
-  );
+      fields: ['po_number'],
+      unique: true,
+    },
+    {
+      fields: ['supplier_id'],
+    },
+    {
+      fields: ['status'],
+    },
+    {
+      fields: ['payment_status'],
+    },
+  ],
+});
 
-  return PurchaseOrder;
-};
+export default PurchaseOrder;
