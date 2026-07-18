@@ -1,5 +1,6 @@
 // Export all API services
 export { default as apiService } from './api';
+export { default as authApi } from './auth.api';
 export { default as insightsApi } from './insights.api';
 export { default as analyticsApi } from './analytics.api';
 export { default as searchApi } from './search.api';
@@ -9,6 +10,7 @@ export { default as loyaltyApi } from './loyalty.api';
 export { default as promotionsApi } from './promotions.api';
 
 // Export types
+export type { User, AuthTokens, LoginResponse, RegisterData, LoginData } from './auth.api';
 export type { Insight, InsightsSummary } from './insights.api';
 export type { AnalyticsData, DashboardSummary } from './analytics.api';
 export type { SearchResult, SearchHistoryItem } from './search.api';

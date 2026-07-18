@@ -166,14 +166,15 @@ export const changePassword = async (req, res) => {
  */
 export const forgotPassword = async (req, res) => {
   try {
-    // TODO: Implement forgot password logic
-    // 1. Generate reset token
-    // 2. Send email with reset link
-    // 3. Store token in database
+    const { email } = req.body;
+
+    await authService.forgotPassword(email);
+
+    logger.info(`Password reset requested for: ${email}`);
 
     return ApiResponse.success(
       res,
-      'Password reset instructions sent to your email'
+      'If the email exists, password reset instructions have been sent'
     );
   } catch (error) {
     logger.error('Forgot password error:', error);
@@ -188,14 +189,24 @@ export const forgotPassword = async (req, res) => {
  */
 export const resetPassword = async (req, res) => {
   try {
-    // TODO: Implement reset password logic
-    // 1. Verify reset token
-    // 2. Update password
-    // 3. Invalidate reset token
+    const { token, password } = req.body;
+
+    await authService.resetPassword(token, password);
+
+    logger.info('Password reset successful');
 
     return ApiResponse.success(res, 'Password reset successful');
   } catch (error) {
     logger.error('Reset password error:', error);
+
+    if (error instanceof ApiError) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+        errors: error.errors,
+      });
+    }
+
     return ApiResponse.internal(res, 'Password reset failed', [error.message]);
   }
 };
@@ -209,4 +220,203 @@ export default {
   changePassword,
   forgotPassword,
   resetPassword,
+};
+
+
+/**
+ * @desc    Send email verification
+ * @route   POST /api/v1/auth/send-verification
+ * @access  Private
+ */
+export const sendEmailVerification = async (req, res) => {
+  try {
+    await authService.sendEmailVerification(req.user.id);
+
+    logger.info(`Verification email sent to: ${req.user.email}`);
+
+    return ApiResponse.success(res, 'Verification email sent');
+  } catch (error) {
+    logger.error('Send verification error:', error);
+
+    if (error instanceof ApiError) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+        errors: error.errors,
+      });
+    }
+
+    return ApiResponse.internal(res, 'Failed to send verification email', [error.message]);
+  }
+};
+
+/**
+ * @desc    Verify email
+ * @route   POST /api/v1/auth/verify-email
+ * @access  Public
+ */
+export const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    await authService.verifyEmail(token);
+
+    logger.info('Email verified successfully');
+
+    return ApiResponse.success(res, 'Email verified successfully');
+  } catch (error) {
+    logger.error('Verify email error:', error);
+
+    if (error instanceof ApiError) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+        errors: error.errors,
+      });
+    }
+
+    return ApiResponse.internal(res, 'Email verification failed', [error.message]);
+  }
+};
+
+/**
+ * @desc    Enable two-factor authentication
+ * @route   POST /api/v1/auth/2fa/enable
+ * @access  Private
+ */
+export const enableTwoFactor = async (req, res) => {
+  try {
+    const result = await authService.enableTwoFactor(req.user.id);
+
+    logger.info(`2FA setup initiated for: ${req.user.email}`);
+
+    return ApiResponse.success(res, '2FA setup initiated', result);
+  } catch (error) {
+    logger.error('Enable 2FA error:', error);
+
+    if (error instanceof ApiError) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+        errors: error.errors,
+      });
+    }
+
+    return ApiResponse.internal(res, 'Failed to enable 2FA', [error.message]);
+  }
+};
+
+/**
+ * @desc    Verify and activate two-factor authentication
+ * @route   POST /api/v1/auth/2fa/verify
+ * @access  Private
+ */
+export const verifyTwoFactor = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    const result = await authService.verifyTwoFactor(req.user.id, token);
+
+    logger.info(`2FA enabled for: ${req.user.email}`);
+
+    return ApiResponse.success(res, '2FA enabled successfully', result);
+  } catch (error) {
+    logger.error('Verify 2FA error:', error);
+
+    if (error instanceof ApiError) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+        errors: error.errors,
+      });
+    }
+
+    return ApiResponse.internal(res, 'Failed to verify 2FA', [error.message]);
+  }
+};
+
+/**
+ * @desc    Disable two-factor authentication
+ * @route   POST /api/v1/auth/2fa/disable
+ * @access  Private
+ */
+export const disableTwoFactor = async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    await authService.disableTwoFactor(req.user.id, password);
+
+    logger.info(`2FA disabled for: ${req.user.email}`);
+
+    return ApiResponse.success(res, '2FA disabled successfully');
+  } catch (error) {
+    logger.error('Disable 2FA error:', error);
+
+    if (error instanceof ApiError) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+        errors: error.errors,
+      });
+    }
+
+    return ApiResponse.internal(res, 'Failed to disable 2FA', [error.message]);
+  }
+};
+
+/**
+ * @desc    Verify 2FA code during login
+ * @route   POST /api/v1/auth/2fa/login
+ * @access  Public
+ */
+export const verifyTwoFactorLogin = async (req, res) => {
+  try {
+    const { userId, token } = req.body;
+
+    await authService.verifyTwoFactorLogin(userId, token);
+
+    // Complete login
+    const user = await db.User.findByPk(userId, {
+      include: [
+        { model: db.Role, as: 'role' },
+        { model: db.Business, as: 'business' },
+        { model: db.Branch, as: 'branch' },
+      ],
+    });
+
+    // Generate tokens
+    const tokens = generateTokenPair({
+      id: user.id,
+      email: user.email,
+      businessId: user.businessId,
+      roleId: user.roleId,
+    });
+
+    await user.update({
+      refreshToken: tokens.refreshToken,
+      lastLoginAt: new Date(),
+    });
+
+    logger.info(`2FA login successful for: ${user.email}`);
+
+    return ApiResponse.success(res, '2FA verification successful', {
+      user: user.toSafeObject(),
+      role: user.role,
+      business: user.business,
+      branch: user.branch,
+      tokens,
+    });
+  } catch (error) {
+    logger.error('2FA login error:', error);
+
+    if (error instanceof ApiError) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+        errors: error.errors,
+      });
+    }
+
+    return ApiResponse.internal(res, '2FA verification failed', [error.message]);
+  }
 };

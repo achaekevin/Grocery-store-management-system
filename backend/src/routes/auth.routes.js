@@ -240,3 +240,13 @@ router.post(
 );
 
 export default router;
+
+// Email verification routes
+router.post('/send-verification', authenticate, authController.sendEmailVerification);
+router.post('/verify-email', authController.verifyEmail);
+
+// Two-factor authentication routes
+router.post('/2fa/enable', authenticate, authController.enableTwoFactor);
+router.post('/2fa/verify', authenticate, authController.verifyTwoFactor);
+router.post('/2fa/disable', authenticate, authController.disableTwoFactor);
+router.post('/2fa/login', authController.verifyTwoFactorLogin);
