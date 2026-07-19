@@ -23,8 +23,7 @@ class Inventory extends Model {
   }
 }
 
-export default (sequelize) => {
-  Inventory.init(
+Inventory.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -115,7 +114,4 @@ export default (sequelize) => {
     }
   );
 
-  return Inventory;
-};
-
-
+export default Inventory;

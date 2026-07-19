@@ -17,8 +17,7 @@ class ExpenseCategory extends Model {
   }
 }
 
-export default (sequelize) => {
-  ExpenseCategory.init(
+ExpenseCategory.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -71,7 +70,4 @@ export default (sequelize) => {
     }
   );
 
-  return ExpenseCategory;
-};
-
-
+export default ExpenseCategory;

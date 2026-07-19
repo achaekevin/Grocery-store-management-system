@@ -20,8 +20,7 @@ class Customer extends Model {
   }
 }
 
-export default (sequelize) => {
-  Customer.init(
+Customer.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -120,7 +119,4 @@ export default (sequelize) => {
     }
   );
 
-  return Customer;
-};
-
-
+export default Customer;

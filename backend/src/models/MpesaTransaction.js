@@ -17,8 +17,7 @@ class MpesaTransaction extends Model {
   }
 }
 
-export default (sequelize) => {
-  MpesaTransaction.init(
+MpesaTransaction.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -144,7 +143,4 @@ export default (sequelize) => {
     }
   );
 
-  return MpesaTransaction;
-};
-
-
+export default MpesaTransaction;

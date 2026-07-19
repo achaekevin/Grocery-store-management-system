@@ -17,8 +17,7 @@ class Supplier extends Model {
   }
 }
 
-export default (sequelize) => {
-  Supplier.init(
+Supplier.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -143,7 +142,4 @@ export default (sequelize) => {
     }
   );
 
-  return Supplier;
-};
-
-
+export default Supplier;

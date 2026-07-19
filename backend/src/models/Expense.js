@@ -29,8 +29,7 @@ class Expense extends Model {
   }
 }
 
-export default (sequelize) => {
-  Expense.init(
+Expense.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -169,7 +168,4 @@ export default (sequelize) => {
     }
   );
 
-  return Expense;
-};
-
-
+export default Expense;

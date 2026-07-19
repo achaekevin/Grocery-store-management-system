@@ -23,8 +23,7 @@ class LoyaltyTransaction extends Model {
   }
 }
 
-export default (sequelize) => {
-  LoyaltyTransaction.init(
+LoyaltyTransaction.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -123,7 +122,4 @@ export default (sequelize) => {
     }
   );
 
-  return LoyaltyTransaction;
-};
-
-
+export default LoyaltyTransaction;

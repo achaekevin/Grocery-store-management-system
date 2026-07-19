@@ -13,8 +13,7 @@ class Permission extends Model {
   }
 }
 
-export default (sequelize) => {
-  Permission.init(
+Permission.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -72,7 +71,4 @@ export default (sequelize) => {
     }
   );
 
-  return Permission;
-};
-
-
+export default Permission;

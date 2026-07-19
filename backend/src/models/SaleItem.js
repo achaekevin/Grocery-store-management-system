@@ -15,8 +15,7 @@ class SaleItem extends Model {
   }
 }
 
-export default (sequelize) => {
-  SaleItem.init(
+SaleItem.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -99,7 +98,4 @@ export default (sequelize) => {
     }
   );
 
-  return SaleItem;
-};
-
-
+export default SaleItem;

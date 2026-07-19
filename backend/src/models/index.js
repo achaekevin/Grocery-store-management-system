@@ -121,7 +121,6 @@ const initModels = async () => {
   // Define associations
   Object.keys(db).forEach((modelName) => {
     if (db[modelName] && typeof db[modelName].associate === 'function') {
-      logger.info(`Associating ${modelName}, Branch is: ${typeof db.Branch}, has init: ${typeof db.Branch?.init}`);
       db[modelName].associate(db);
     }
   });

@@ -41,8 +41,7 @@ class User extends Model {
   }
 }
 
-export default (sequelize) => {
-  User.init(
+User.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -206,7 +205,4 @@ export default (sequelize) => {
     }
   );
 
-  return User;
-};
-
-
+export default User;

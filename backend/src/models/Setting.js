@@ -11,8 +11,7 @@ class Setting extends Model {
   }
 }
 
-export default (sequelize) => {
-  Setting.init(
+Setting.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -87,7 +86,4 @@ export default (sequelize) => {
     }
   );
 
-  return Setting;
-};
-
-
+export default Setting;

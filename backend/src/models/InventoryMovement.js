@@ -29,8 +29,7 @@ class InventoryMovement extends Model {
   }
 }
 
-export default (sequelize) => {
-  InventoryMovement.init(
+InventoryMovement.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -167,7 +166,4 @@ export default (sequelize) => {
     }
   );
 
-  return InventoryMovement;
-};
-
-
+export default InventoryMovement;

@@ -19,8 +19,7 @@ class Role extends Model {
   }
 }
 
-export default (sequelize) => {
-  Role.init(
+Role.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -81,7 +80,4 @@ export default (sequelize) => {
     }
   );
 
-  return Role;
-};
-
-
+export default Role;

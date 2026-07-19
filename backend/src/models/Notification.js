@@ -17,8 +17,7 @@ class Notification extends Model {
   }
 }
 
-export default (sequelize) => {
-  Notification.init(
+Notification.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -118,7 +117,4 @@ export default (sequelize) => {
     }
   );
 
-  return Notification;
-};
-
-
+export default Notification;

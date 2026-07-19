@@ -35,8 +35,7 @@ class Branch extends Model {
   }
 }
 
-export default (sequelize) => {
-  Branch.init(
+Branch.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -146,7 +145,4 @@ export default (sequelize) => {
     }
   );
 
-  return Branch;
-};
-
-
+export default Branch;

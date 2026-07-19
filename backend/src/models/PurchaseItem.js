@@ -17,8 +17,7 @@ class PurchaseItem extends Model {
   }
 }
 
-export default (sequelize) => {
-  PurchaseItem.init(
+PurchaseItem.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -126,7 +125,4 @@ export default (sequelize) => {
     }
   );
 
-  return PurchaseItem;
-};
-
-
+export default PurchaseItem;

@@ -17,8 +17,7 @@ class AuditLog extends Model {
   }
 }
 
-export default (sequelize) => {
-  AuditLog.init(
+AuditLog.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -117,7 +116,4 @@ export default (sequelize) => {
     }
   );
 
-  return AuditLog;
-};
-
-
+export default AuditLog;

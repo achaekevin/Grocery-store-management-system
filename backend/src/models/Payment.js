@@ -23,8 +23,7 @@ class Payment extends Model {
   }
 }
 
-export default (sequelize) => {
-  Payment.init(
+Payment.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -137,7 +136,4 @@ export default (sequelize) => {
     }
   );
 
-  return Payment;
-};
-
-
+export default Payment;
