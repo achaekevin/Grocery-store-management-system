@@ -9,12 +9,6 @@ class Branch extends Model {
       as: 'business',
     });
 
-    // Branch has many users
-    Branch.hasMany(models.User, {
-      foreignKey: 'branchId',
-      as: 'users',
-    });
-
     // Branch has many products
     Branch.hasMany(models.Product, {
       foreignKey: 'branchId',
