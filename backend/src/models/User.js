@@ -2,6 +2,7 @@ import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
 import bcrypt from 'bcryptjs';
 
+// User model for authentication and authorization
 class User extends Model {
   static associate(models) {
     // User belongs to Tenant (Business)
