@@ -62,7 +62,7 @@ module.exports = {
         allowNull: true,
       },
       data: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: false,
       },
       actionable: {
@@ -86,7 +86,7 @@ module.exports = {
         allowNull: true,
       },
       metadata: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: true,
       },
       created_at: {

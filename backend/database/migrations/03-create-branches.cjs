@@ -29,12 +29,7 @@ module.exports = {
       },
       manager_id: {
         type: Sequelize.UUID,
-        references: {
-          model: 'users',
-          key: 'id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
+        allowNull: true,
       },
       phone: {
         type: Sequelize.STRING,

@@ -59,7 +59,7 @@ module.exports = {
         allowNull: true,
       },
       filters: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: true,
       },
       created_at: {

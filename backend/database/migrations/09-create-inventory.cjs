@@ -48,12 +48,6 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 0,
       },
-      available_quantity: {
-        type: Sequelize.VIRTUAL,
-        get() {
-          return this.quantity - (this.reserved_quantity || 0);
-        },
-      },
       batch_number: {
         type: Sequelize.STRING,
       },

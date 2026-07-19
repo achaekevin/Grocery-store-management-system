@@ -43,12 +43,12 @@ module.exports = {
         defaultValue: 100,
       },
       membership_tiers: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: false,
         comment: 'Array of tier configurations (bronze, silver, gold, etc.)',
       },
       benefits: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: true,
         comment: 'Benefits per tier',
       },

@@ -60,7 +60,7 @@ module.exports = {
         comment: 'File size in bytes',
       },
       parameters: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: true,
         comment: 'Report parameters used during generation',
       },

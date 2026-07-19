@@ -76,7 +76,7 @@ module.exports = {
         allowNull: true,
       },
       attendees: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: true,
         comment: 'Array of user IDs',
       },
@@ -85,7 +85,7 @@ module.exports = {
         defaultValue: 'scheduled',
       },
       reminder: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: true,
         comment: 'Reminder configuration',
       },
@@ -98,7 +98,7 @@ module.exports = {
         allowNull: true,
       },
       metadata: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: true,
       },
       created_at: {

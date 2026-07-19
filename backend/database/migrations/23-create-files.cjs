@@ -81,7 +81,7 @@ module.exports = {
         defaultValue: false,
       },
       metadata: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: true,
         comment: 'Additional file metadata (dimensions, duration, etc.)',
       },

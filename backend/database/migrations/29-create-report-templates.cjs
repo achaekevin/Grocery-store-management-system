@@ -45,7 +45,7 @@ module.exports = {
         defaultValue: 'pdf',
       },
       template_config: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: false,
         comment: 'Stores report structure, columns, filters, and formatting',
       },
@@ -54,7 +54,7 @@ module.exports = {
         defaultValue: false,
       },
       schedule_config: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: true,
         comment: 'Cron expression and recipients for scheduled reports',
       },

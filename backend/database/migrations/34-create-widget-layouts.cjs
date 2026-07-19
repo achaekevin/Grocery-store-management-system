@@ -37,7 +37,7 @@ module.exports = {
         defaultValue: false,
       },
       layout: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: false,
         comment: 'Stores widget positions, sizes, and configuration',
       },

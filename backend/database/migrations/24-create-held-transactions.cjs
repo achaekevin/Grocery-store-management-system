@@ -49,7 +49,7 @@ module.exports = {
         onDelete: 'SET NULL',
       },
       transaction_data: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: false,
         comment: 'Complete transaction state including items, discounts, etc.',
       },

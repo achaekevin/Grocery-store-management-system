@@ -42,12 +42,12 @@ module.exports = {
         allowNull: true,
       },
       conditions: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: true,
         comment: 'Minimum purchase, specific products, categories, etc.',
       },
       applicable_to: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: true,
         comment: 'Products, categories, or branches this promotion applies to',
       },

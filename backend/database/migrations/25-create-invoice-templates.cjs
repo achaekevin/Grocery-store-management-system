@@ -63,7 +63,7 @@ module.exports = {
         allowNull: true,
       },
       template_config: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: false,
         comment: 'Complete template configuration including sections and fields',
       },

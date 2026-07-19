@@ -55,7 +55,7 @@ module.exports = {
         defaultValue: 'medium',
       },
       template_config: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: false,
         comment: 'Layout, styles, and field visibility configuration',
       },

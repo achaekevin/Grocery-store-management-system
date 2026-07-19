@@ -50,7 +50,7 @@ module.exports = {
         allowNull: false,
       },
       payload: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
         allowNull: false,
         comment: 'The data to be synchronized',
       },
