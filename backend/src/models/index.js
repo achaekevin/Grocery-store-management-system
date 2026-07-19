@@ -21,7 +21,8 @@ const testConnection = async () => {
 // Import models dynamically
 const initModels = async () => {
   // Import all model initializer functions
-  const ActivityInit = (await import('./Activity.js')).default;
+  // Note: Activity is an alias for AuditLog, so we skip it to avoid duplicate associations
+  // Note: Order is an alias for Sale, so we skip it to avoid duplicate associations
   const AnalyticsDataInit = (await import('./AnalyticsData.js')).default;
   const AuditLogInit = (await import('./AuditLog.js')).default;
   const BranchInit = (await import('./Branch.js')).default;
@@ -41,7 +42,6 @@ const initModels = async () => {
   const LoyaltyTransactionInit = (await import('./LoyaltyTransaction.js')).default;
   const MpesaTransactionInit = (await import('./MpesaTransaction.js')).default;
   const NotificationInit = (await import('./Notification.js')).default;
-  const OrderInit = (await import('./Order.js')).default;
   const PaymentInit = (await import('./Payment.js')).default;
   const PermissionInit = (await import('./Permission.js')).default;
   const ProductInit = (await import('./Product.js')).default;
@@ -68,7 +68,7 @@ const initModels = async () => {
 
   // Initialize all models
   try {
-    db.Activity = ActivityInit;
+    // db.Activity is an alias for db.AuditLog - set it after AuditLog is initialized
     db.AnalyticsData = AnalyticsDataInit;
     db.AuditLog = AuditLogInit;
     db.Branch = BranchInit;
@@ -88,7 +88,6 @@ const initModels = async () => {
     db.LoyaltyTransaction = LoyaltyTransactionInit;
     db.MpesaTransaction = MpesaTransactionInit;
     db.Notification = NotificationInit;
-    db.Order = OrderInit;
     db.Payment = PaymentInit;
     db.Permission = PermissionInit;
     db.Product = ProductInit;
@@ -124,6 +123,12 @@ const initModels = async () => {
       db[modelName].associate(db);
     }
   });
+
+  // Set Activity as an alias for AuditLog (for backwards compatibility)
+  db.Activity = db.AuditLog;
+
+  // Set Order as an alias for Sale (for backwards compatibility)
+  db.Order = db.Sale;
 
   logger.info('All models initialized with associations');
 };
