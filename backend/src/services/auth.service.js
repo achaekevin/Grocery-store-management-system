@@ -124,12 +124,12 @@ export const login = async (email, password) => {
   }
 
   // Check if user is active
-  if (user.status !== 'active') {
+  if (!user.isActive) {
     throw ApiError.unauthorized('Account is not active');
   }
 
   // Check if business is active
-  if (user.business.status !== 'active') {
+  if (!user.business.isActive) {
     throw ApiError.unauthorized('Business account is suspended');
   }
 
@@ -137,7 +137,7 @@ export const login = async (email, password) => {
   const tokens = generateTokenPair({
     id: user.id,
     email: user.email,
-    businessId: user.businessId,
+    tenantId: user.tenantId,
     roleId: user.roleId,
   });
 
