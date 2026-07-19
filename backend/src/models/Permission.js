@@ -16,28 +16,26 @@ class Permission extends Model {
 Permission.init(
     {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
-        autoIncrement: true,
-      },
-      module: {
-        type: DataTypes.STRING(100),
-        allowNull: false,
-        comment: 'Module name (e.g., products, sales, customers)',
-      },
-      action: {
-        type: DataTypes.ENUM('create', 'read', 'update', 'delete'),
-        allowNull: false,
       },
       name: {
-        type: DataTypes.STRING(150),
+        type: DataTypes.STRING,
         allowNull: false,
         unique: true,
-        comment: 'Permission name (e.g., products.create)',
+      },
+      slug: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
       },
       description: {
         type: DataTypes.TEXT,
-        allowNull: true,
+      },
+      module: {
+        type: DataTypes.STRING,
+        allowNull: false,
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -55,6 +53,7 @@ Permission.init(
       modelName: 'Permission',
       tableName: 'permissions',
       timestamps: true,
+      paranoid: false, // No soft deletes for permissions
       underscored: true,
       indexes: [
         {
@@ -62,10 +61,11 @@ Permission.init(
           fields: ['name'],
         },
         {
-          fields: ['module'],
+          unique: true,
+          fields: ['slug'],
         },
         {
-          fields: ['action'],
+          fields: ['module'],
         },
       ],
     }
