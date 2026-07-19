@@ -29,73 +29,79 @@ class Business extends Model {
 Business.init(
     {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
-        autoIncrement: true,
       },
       name: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
-        validate: {
-          notEmpty: true,
-          len: [2, 255],
-        },
+      },
+      slug: {
+        type: DataTypes.STRING,
+        unique: true,
       },
       email: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
-        validate: {
-          isEmail: true,
-        },
       },
       phone: {
-        type: DataTypes.STRING(20),
-        allowNull: false,
-        validate: {
-          notEmpty: true,
-        },
+        type: DataTypes.STRING,
+      },
+      logo: {
+        type: DataTypes.STRING,
       },
       address: {
         type: DataTypes.TEXT,
-        allowNull: true,
       },
-      logo: {
-        type: DataTypes.STRING(500),
-        allowNull: true,
+      city: {
+        type: DataTypes.STRING,
+      },
+      state: {
+        type: DataTypes.STRING,
+      },
+      country: {
+        type: DataTypes.STRING,
+        defaultValue: 'Kenya',
+      },
+      postalCode: {
+        type: DataTypes.STRING,
+        field: 'postal_code',
       },
       taxId: {
-        type: DataTypes.STRING(100),
-        allowNull: true,
+        type: DataTypes.STRING,
         field: 'tax_id',
       },
       currency: {
-        type: DataTypes.STRING(10),
-        defaultValue: 'KSh',
+        type: DataTypes.STRING,
+        defaultValue: 'KES',
       },
-      status: {
-        type: DataTypes.ENUM('active', 'suspended', 'inactive'),
-        defaultValue: 'active',
+      timezone: {
+        type: DataTypes.STRING,
+        defaultValue: 'Africa/Nairobi',
       },
       subscriptionPlan: {
-        type: DataTypes.ENUM('free', 'basic', 'premium', 'enterprise'),
+        type: DataTypes.ENUM('free', 'basic', 'professional', 'enterprise'),
         defaultValue: 'free',
         field: 'subscription_plan',
       },
-      subscriptionExpiresAt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        field: 'subscription_expires_at',
+      subscriptionStatus: {
+        type: DataTypes.ENUM('active', 'trial', 'suspended', 'cancelled'),
+        defaultValue: 'trial',
+        field: 'subscription_status',
       },
-      isVerified: {
+      subscriptionEndsAt: {
+        type: DataTypes.DATE,
+        field: 'subscription_ends_at',
+      },
+      settings: {
+        type: DataTypes.JSON,
+        defaultValue: {},
+      },
+      isActive: {
         type: DataTypes.BOOLEAN,
-        defaultValue: false,
-        field: 'is_verified',
-      },
-      verifiedAt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        field: 'verified_at',
+        defaultValue: true,
+        field: 'is_active',
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -109,14 +115,13 @@ Business.init(
       },
       deletedAt: {
         type: DataTypes.DATE,
-        allowNull: true,
         field: 'deleted_at',
       },
     },
     {
       sequelize,
       modelName: 'Business',
-      tableName: 'businesses',
+      tableName: 'tenants',
       timestamps: true,
       paranoid: true,
       underscored: true,
