@@ -55,3 +55,4 @@ const Brand = sequelize.define('Brand', {
 });
 
 export default Brand;
+

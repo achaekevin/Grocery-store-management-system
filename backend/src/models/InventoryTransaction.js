@@ -138,3 +138,4 @@ const InventoryTransaction = sequelize.define('InventoryTransaction', {
 });
 
 export default InventoryTransaction;
+

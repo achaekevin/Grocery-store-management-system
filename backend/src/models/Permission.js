@@ -1,4 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
+import sequelize from '../config/sequelize.js';
 
 class Permission extends Model {
   static associate(models) {
@@ -73,3 +74,5 @@ export default (sequelize) => {
 
   return Permission;
 };
+
+

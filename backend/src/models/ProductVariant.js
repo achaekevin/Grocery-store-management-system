@@ -107,3 +107,4 @@ const ProductVariant = sequelize.define('ProductVariant', {
 });
 
 export default ProductVariant;
+

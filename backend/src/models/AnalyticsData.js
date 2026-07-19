@@ -67,3 +67,4 @@ const AnalyticsData = sequelize.define('AnalyticsData', {
 });
 
 export default AnalyticsData;
+

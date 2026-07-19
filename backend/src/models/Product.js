@@ -1,4 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
+import sequelize from '../config/sequelize.js';
 
 class Product extends Model {
   static associate(models) {
@@ -211,3 +212,5 @@ export default (sequelize) => {
 
   return Product;
 };
+
+

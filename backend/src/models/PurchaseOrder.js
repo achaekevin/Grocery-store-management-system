@@ -158,3 +158,4 @@ const PurchaseOrder = sequelize.define('PurchaseOrder', {
 });
 
 export default PurchaseOrder;
+

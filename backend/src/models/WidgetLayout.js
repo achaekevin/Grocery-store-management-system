@@ -38,3 +38,4 @@ const WidgetLayout = sequelize.define('WidgetLayout', {
 });
 
 export default WidgetLayout;
+

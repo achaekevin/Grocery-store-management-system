@@ -1,4 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
+import sequelize from '../config/sequelize.js';
 
 class Business extends Model {
   static associate(models) {
@@ -25,8 +26,7 @@ class Business extends Model {
   }
 }
 
-export default (sequelize) => {
-  Business.init(
+Business.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -135,5 +135,5 @@ export default (sequelize) => {
     }
   );
 
-  return Business;
-};
+export default Business;
+

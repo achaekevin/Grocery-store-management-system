@@ -106,3 +106,4 @@ const PurchaseRequest = sequelize.define('PurchaseRequest', {
 });
 
 export default PurchaseRequest;
+

@@ -1,4 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
+import sequelize from '../config/sequelize.js';
 
 class ExpenseCategory extends Model {
   static associate(models) {
@@ -72,3 +73,5 @@ export default (sequelize) => {
 
   return ExpenseCategory;
 };
+
+

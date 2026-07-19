@@ -82,3 +82,4 @@ const HeldTransaction = sequelize.define('HeldTransaction', {
 });
 
 export default HeldTransaction;
+

@@ -69,3 +69,4 @@ const LoyaltyProgram = sequelize.define('LoyaltyProgram', {
 });
 
 export default LoyaltyProgram;
+

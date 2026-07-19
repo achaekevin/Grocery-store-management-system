@@ -94,3 +94,4 @@ const Insight = sequelize.define('Insight', {
 });
 
 export default Insight;
+

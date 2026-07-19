@@ -97,3 +97,4 @@ const UserPreference = sequelize.define('UserPreference', {
 });
 
 export default UserPreference;
+

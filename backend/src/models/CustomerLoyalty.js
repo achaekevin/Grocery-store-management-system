@@ -60,3 +60,4 @@ const CustomerLoyalty = sequelize.define('CustomerLoyalty', {
 });
 
 export default CustomerLoyalty;
+

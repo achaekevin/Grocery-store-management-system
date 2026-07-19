@@ -88,3 +88,4 @@ const Promotion = sequelize.define('Promotion', {
 });
 
 export default Promotion;
+

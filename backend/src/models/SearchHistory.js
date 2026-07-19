@@ -63,3 +63,4 @@ const SearchHistory = sequelize.define('SearchHistory', {
 });
 
 export default SearchHistory;
+

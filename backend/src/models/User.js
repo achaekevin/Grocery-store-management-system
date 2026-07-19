@@ -1,4 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
+import sequelize from '../config/sequelize.js';
 import bcrypt from 'bcryptjs';
 
 class User extends Model {
@@ -207,3 +208,5 @@ export default (sequelize) => {
 
   return User;
 };
+
+

@@ -65,3 +65,4 @@ const Review = sequelize.define('Review', {
 });
 
 export default Review;
+

@@ -1,4 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
+import sequelize from '../config/sequelize.js';
 
 class Inventory extends Model {
   static associate(models) {
@@ -116,3 +117,5 @@ export default (sequelize) => {
 
   return Inventory;
 };
+
+

@@ -59,3 +59,4 @@ const Unit = sequelize.define('Unit', {
 Unit.belongsTo(Unit, { as: 'base', foreignKey: 'baseUnit' });
 
 export default Unit;
+

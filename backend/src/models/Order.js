@@ -2,3 +2,4 @@
 import Sale from './Sale.js';
 
 export default Sale;
+

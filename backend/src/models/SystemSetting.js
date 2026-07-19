@@ -70,3 +70,4 @@ const SystemSetting = sequelize.define('SystemSetting', {
 });
 
 export default SystemSetting;
+
