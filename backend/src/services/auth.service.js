@@ -110,10 +110,6 @@ export const login = async (email, password) => {
         model: db.Business,
         as: 'business',
       },
-      {
-        model: db.Branch,
-        as: 'branch',
-      },
     ],
   });
 

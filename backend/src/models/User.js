@@ -4,16 +4,10 @@ import bcrypt from 'bcryptjs';
 
 class User extends Model {
   static associate(models) {
-    // User belongs to Business
+    // User belongs to Tenant (Business)
     User.belongsTo(models.Business, {
-      foreignKey: 'businessId',
+      foreignKey: 'tenantId',
       as: 'business',
-    });
-
-    // User belongs to Branch
-    User.belongsTo(models.Branch, {
-      foreignKey: 'branchId',
-      as: 'branch',
     });
 
     // User belongs to Role
@@ -44,30 +38,21 @@ class User extends Model {
 User.init(
     {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
-        autoIncrement: true,
       },
-      businessId: {
-        type: DataTypes.INTEGER,
+      tenantId: {
+        type: DataTypes.UUID,
         allowNull: false,
-        field: 'business_id',
+        field: 'tenant_id',
         references: {
-          model: 'businesses',
-          key: 'id',
-        },
-      },
-      branchId: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        field: 'branch_id',
-        references: {
-          model: 'branches',
+          model: 'tenants',
           key: 'id',
         },
       },
       roleId: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: false,
         field: 'role_id',
         references: {
@@ -75,76 +60,59 @@ User.init(
           key: 'id',
         },
       },
-      name: {
-        type: DataTypes.STRING(255),
+      firstName: {
+        type: DataTypes.STRING,
         allowNull: false,
-        validate: {
-          notEmpty: true,
-        },
+        field: 'first_name',
+      },
+      lastName: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        field: 'last_name',
       },
       email: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-        unique: true,
-        validate: {
-          isEmail: true,
-        },
-      },
-      password: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
       },
       phone: {
-        type: DataTypes.STRING(20),
+        type: DataTypes.STRING,
+      },
+      password: {
+        type: DataTypes.STRING,
         allowNull: false,
       },
       avatar: {
-        type: DataTypes.STRING(500),
-        allowNull: true,
+        type: DataTypes.STRING,
       },
-      status: {
-        type: DataTypes.ENUM('active', 'inactive', 'suspended'),
-        defaultValue: 'active',
-      },
-      isEmailVerified: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-        field: 'is_email_verified',
-      },
-      emailVerifiedAt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        field: 'email_verified_at',
+      twoFactorSecret: {
+        type: DataTypes.STRING,
+        field: 'two_factor_secret',
       },
       twoFactorEnabled: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
         field: 'two_factor_enabled',
       },
-      twoFactorSecret: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-        field: 'two_factor_secret',
+      emailVerifiedAt: {
+        type: DataTypes.DATE,
+        field: 'email_verified_at',
       },
       lastLoginAt: {
         type: DataTypes.DATE,
-        allowNull: true,
         field: 'last_login_at',
       },
       lastLoginIp: {
-        type: DataTypes.STRING(45),
-        allowNull: true,
+        type: DataTypes.STRING,
         field: 'last_login_ip',
       },
-      passwordChangedAt: {
-        type: DataTypes.DATE,
-        allowNull: true,
-        field: 'password_changed_at',
+      isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+        field: 'is_active',
       },
-      refreshToken: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-        field: 'refresh_token',
+      preferences: {
+        type: DataTypes.JSON,
+        defaultValue: {},
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -158,7 +126,6 @@ User.init(
       },
       deletedAt: {
         type: DataTypes.DATE,
-        allowNull: true,
         field: 'deleted_at',
       },
     },
@@ -172,19 +139,13 @@ User.init(
       indexes: [
         {
           unique: true,
-          fields: ['email'],
+          fields: ['tenant_id', 'email'],
         },
         {
-          fields: ['business_id'],
+          fields: ['tenant_id', 'role_id'],
         },
         {
-          fields: ['branch_id'],
-        },
-        {
-          fields: ['role_id'],
-        },
-        {
-          fields: ['status'],
+          fields: ['is_active'],
         },
       ],
       hooks: {

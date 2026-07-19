@@ -5,22 +5,22 @@ class Business extends Model {
   static associate(models) {
     // Business has many branches
     Business.hasMany(models.Branch, {
-      foreignKey: 'businessId',
+      foreignKey: 'tenantId',
       as: 'branches',
       onDelete: 'CASCADE',
     });
 
     // Business has many users
     Business.hasMany(models.User, {
-      foreignKey: 'businessId',
+      foreignKey: 'tenantId',
       as: 'users',
       onDelete: 'CASCADE',
     });
 
     // Business has one settings
     Business.hasOne(models.Setting, {
-      foreignKey: 'businessId',
-      as: 'settings',
+      foreignKey: 'tenantId',
+      as: 'settingsData',
       onDelete: 'CASCADE',
     });
   }

@@ -22,33 +22,34 @@ class Role extends Model {
 Role.init(
     {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
-        autoIncrement: true,
       },
-      name: {
-        type: DataTypes.STRING(100),
-        allowNull: false,
-        unique: true,
-        validate: {
-          notEmpty: true,
-          isIn: [['Super Admin', 'Branch Manager', 'Cashier', 'Inventory Clerk', 'Accountant']],
+      tenantId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        field: 'tenant_id',
+        references: {
+          model: 'tenants',
+          key: 'id',
         },
       },
-      slug: {
-        type: DataTypes.STRING(100),
+      name: {
+        type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
+      },
+      slug: {
+        type: DataTypes.STRING,
+        allowNull: false,
       },
       description: {
         type: DataTypes.TEXT,
-        allowNull: true,
       },
       isSystem: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
         field: 'is_system',
-        comment: 'System roles cannot be deleted',
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -60,21 +61,22 @@ Role.init(
         allowNull: false,
         field: 'updated_at',
       },
+      deletedAt: {
+        type: DataTypes.DATE,
+        field: 'deleted_at',
+      },
     },
     {
       sequelize,
       modelName: 'Role',
       tableName: 'roles',
       timestamps: true,
+      paranoid: true,
       underscored: true,
       indexes: [
         {
           unique: true,
-          fields: ['name'],
-        },
-        {
-          unique: true,
-          fields: ['slug'],
+          fields: ['tenant_id', 'slug'],
         },
       ],
     }

@@ -7,7 +7,7 @@ const dbConfig = {
   host: config.database.host,
   port: config.database.port,
   dialect: config.database.dialect,
-  logging: env === 'development' ? (msg) => logger.debug(msg) : false,
+  logging: env === 'development' ? console.log : false,
   pool: {
     max: config.database.poolMax || 5,
     min: config.database.poolMin || 0,
