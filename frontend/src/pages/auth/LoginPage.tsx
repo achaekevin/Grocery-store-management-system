@@ -10,7 +10,7 @@ import { useAppDispatch } from '@hooks/useAppDispatch';
 import { loginSuccess } from '@store/slices/authSlice';
 import { useToast } from '@hooks/useToast';
 import { LoginCredentials } from '@types/index';
-import { USERS } from '@services/mockData';
+import { authApi } from '@services/auth.api';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,24 +30,37 @@ export const LoginPage: React.FC = () => {
   const onSubmit = async (data: LoginCredentials) => {
     setLoading(true);
 
-    setTimeout(() => {
-      const user = USERS.find((u) => u.email === data.email);
+    try {
+      const response = await authApi.login({
+        email: data.email,
+        password: data.password,
+      });
 
-      if (user) {
+      if (response.success) {
+        // Check if 2FA is required
+        if (response.data.requiresTwoFactor) {
+          // Redirect to 2FA verification page
+          navigate('/auth/verify-2fa', { state: { userId: response.data.user.id } });
+          return;
+        }
+
+        // Dispatch login success to Redux store
         dispatch(
           loginSuccess({
-            user,
-            token: 'mock-jwt-token-' + Date.now(),
+            user: response.data.user,
+            token: response.data.tokens.accessToken,
           })
         );
+
         success('Login successful!');
         navigate('/dashboard');
-      } else {
-        error('Invalid credentials');
       }
-
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Invalid email or password';
+      error(errorMessage);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -139,14 +152,6 @@ export const LoginPage: React.FC = () => {
         <Link to="/auth/register" className="font-medium text-primary hover:underline">
           Register your business
         </Link>
-      </div>
-
-      <div className="rounded-xl border border-dashed border-border bg-muted/40 p-4 text-xs text-muted-foreground">
-        <p className="mb-2 font-semibold uppercase tracking-[0.2em]">Demo credentials</p>
-        <div className="space-y-1">
-          <div><strong>Email:</strong> john@groceryos.co.ke</div>
-          <div><strong>Password:</strong> <em>any password</em></div>
-        </div>
       </div>
     </div>
   );

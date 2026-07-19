@@ -147,7 +147,12 @@ export const LandingPage: React.FC = () => {
           <a href="#contact" className="transition hover:text-foreground">Contact</a>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <Link to="/auth/login">
+            <Button variant="outline" size="sm" className="rounded-full">
+              Sign In
+            </Button>
+          </Link>
           <button
             type="button"
             onClick={() => setLanguage((prev) => (prev === 'en' ? 'sw' : 'en'))}
@@ -191,15 +196,6 @@ export const LandingPage: React.FC = () => {
                   {content.secondaryCta}
                 </Button>
               </a>
-            </div>
-
-            <div className="mt-10 grid gap-4 sm:grid-cols-3">
-              {stats.map((stat) => (
-                <div key={stat.label} className="rounded-2xl border border-border/80 bg-card/70 p-4 shadow-sm">
-                  <p className="text-2xl font-semibold">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                </div>
-              ))}
             </div>
           </motion.div>
 

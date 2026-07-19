@@ -8,6 +8,7 @@ import { Input } from '@components/ui/Input';
 import { registerBusinessSchema } from '@utils/validation';
 import { useToast } from '@hooks/useToast';
 import { RegisterBusinessData } from '@types/index';
+import { authApi } from '@services/auth.api';
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -27,12 +28,19 @@ export const RegisterPage: React.FC = () => {
   const onSubmit = async (data: RegisterBusinessData) => {
     setLoading(true);
     
-    // Mock registration
-    setTimeout(() => {
-      success('Business registered successfully! Please check your email to verify your account.');
+    try {
+      const response = await authApi.register(data);
+      
+      if (response.success) {
+        success('Business registered successfully! Please check your email to verify your account.');
+        navigate('/auth/login');
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
+      error(errorMessage);
+    } finally {
       setLoading(false);
-      navigate('/auth/login');
-    }, 1500);
+    }
   };
 
   return (

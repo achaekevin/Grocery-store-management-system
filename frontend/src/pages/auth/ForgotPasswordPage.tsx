@@ -7,13 +7,14 @@ import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
 import { forgotPasswordSchema } from '@utils/validation';
 import { useToast } from '@hooks/useToast';
+import { authApi } from '@services/auth.api';
 
 interface ForgotPasswordForm {
   email: string;
 }
 
 export const ForgotPasswordPage: React.FC = () => {
-  const { success } = useToast();
+  const { success, error } = useToast();
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
@@ -28,12 +29,16 @@ export const ForgotPasswordPage: React.FC = () => {
   const onSubmit = async (data: ForgotPasswordForm) => {
     setLoading(true);
     
-    // Mock API call
-    setTimeout(() => {
+    try {
+      await authApi.forgotPassword(data.email);
       success('Password reset link sent to your email!');
       setEmailSent(true);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to send reset link. Please try again.';
+      error(errorMessage);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -51,7 +56,7 @@ export const ForgotPasswordPage: React.FC = () => {
         <p className="mt-2 text-sm text-muted-foreground">
           {emailSent
             ? "We've sent a password reset link to your email address"
-            : 'Enter your email address and we'll send you a reset link'}
+            : "Enter your email address and we'll send you a reset link"}
         </p>
       </div>
 
