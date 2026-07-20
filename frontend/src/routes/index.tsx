@@ -17,6 +17,7 @@ import { CustomersPage } from '@pages/customers/CustomersPage';
 import { SuppliersPage } from '@pages/suppliers/SuppliersPage';
 import { BranchesPage } from '@pages/branches/BranchesPage';
 import { SettingsPage } from '@pages/settings/SettingsPage';
+import { ProfilePage } from '@pages/settings/ProfilePage';
 
 // POS Pages
 import { POSPage } from '@pages/pos/POSPage';
@@ -78,6 +79,10 @@ export const router = createBrowserRouter([
       {
         path: 'settings',
         element: <SettingsPage />,
+      },
+      {
+        path: 'profile',
+        element: <ProfilePage />,
       },
     ],
   },
