@@ -16,15 +16,23 @@ export type ExpenseCategory = 'Rent' | 'Utilities' | 'Staff' | 'Transport' | 'Ma
 // ============ USER & AUTH ============
 
 export interface User {
-  id: number;
-  name: string;
+  id: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  role: UserRole;
-  branch: string;
-  status: 'active' | 'inactive';
-  lastLogin: string;
-  phone: string;
+  role: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  business: {
+    id: string;
+    name: string;
+  };
+  is_active: boolean;
+  phone?: string;
   avatar?: string;
+  tenant_id?: string;
 }
 
 export interface AuthState {
