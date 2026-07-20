@@ -1,4 +1,5 @@
 import express from 'express';
+import { authLimiter, apiLimiter } from '../middleware/rateLimiter.js';
 import authRoutes from './auth.routes.js';
 import productRoutes from './product.routes.js';
 import posRoutes from './pos.routes.js';
@@ -28,6 +29,12 @@ import analyticsEnhancedRoutes from './analyticsEnhanced.routes.js';
 const router = express.Router();
 
 /**
+ * Apply API rate limiter to all routes
+ * 1000 requests per hour per IP
+ */
+router.use(apiLimiter);
+
+/**
  * Health check route
  */
 router.get('/health', (req, res) => {
@@ -40,8 +47,9 @@ router.get('/health', (req, res) => {
 
 /**
  * API routes
+ * Auth routes have strict rate limiting (5 attempts per 15 minutes)
  */
-router.use('/auth', authRoutes);
+router.use('/auth', authLimiter, authRoutes);
 router.use('/products', productRoutes);
 router.use('/pos', posRoutes);
 router.use('/inventory', inventoryRoutes);
