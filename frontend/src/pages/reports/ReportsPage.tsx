@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
 import { FileText, Download, Calendar, TrendingUp, Package, DollarSign, Users, Eye, Loader2 } from 'lucide-react';
 import { Button } from '@components/ui/Button';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/useToast';
+import { useAppSelector } from '@hooks/useAppSelector';
+import { useToast } from '@hooks/useToast';
 import axios from 'axios';
 
 interface SavedReport {
@@ -22,7 +22,7 @@ interface ReportTemplate {
 }
 
 export const ReportsPage: React.FC = () => {
-  const { token } = useAuth();
+  const { token } = useAppSelector((state) => state.auth);
   const toast = useToast();
   const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
