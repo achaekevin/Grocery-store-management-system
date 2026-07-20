@@ -79,11 +79,15 @@ export const Navbar: React.FC = () => {
               className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                {user ? getInitials(user.name) : 'U'}
+                {user ? getInitials({ first_name: user.first_name, last_name: user.last_name }) : 'U'}
               </div>
               <div className="hidden text-left md:block">
-                <div className="text-sm font-medium">{user?.name || 'User'}</div>
-                <div className="text-xs text-muted-foreground">{user?.role || 'Role'}</div>
+                <div className="text-sm font-medium">
+                  {user ? `${user.first_name} ${user.last_name}` : 'User'}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {user?.role?.name || 'Role'}
+                </div>
               </div>
             </button>
 
@@ -96,7 +100,9 @@ export const Navbar: React.FC = () => {
                 />
                 <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border bg-popover p-1 shadow-lg">
                   <div className="border-b px-3 py-2">
-                    <div className="font-medium">{user?.name}</div>
+                    <div className="font-medium">
+                      {user ? `${user.first_name} ${user.last_name}` : 'User'}
+                    </div>
                     <div className="text-xs text-muted-foreground">{user?.email}</div>
                   </div>
                   <button
