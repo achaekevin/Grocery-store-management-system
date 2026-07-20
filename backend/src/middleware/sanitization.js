@@ -425,17 +425,25 @@ export const validateField = (field, value, type, options = {}) => {
  * Block requests with suspicious patterns in headers
  */
 export const validateHeaders = (req, res, next) => {
-  const suspiciousHeaders = ['x-forwarded-for', 'x-real-ip', 'referer', 'user-agent'];
+  // Only check specific headers for specific patterns
+  // Don't check user-agent as it legitimately contains special characters
+  const headersToCheck = {
+    'x-forwarded-for': ['sqlInjection', 'xss'],
+    'x-real-ip': ['sqlInjection', 'xss'],
+    'referer': ['xss'],
+  };
   
-  for (const header of suspiciousHeaders) {
+  for (const [header, patternTypes] of Object.entries(headersToCheck)) {
     const value = req.headers[header];
     if (value && typeof value === 'string') {
-      if (containsMaliciousPattern(value)) {
-        logger.warn(`Malicious pattern detected in ${header} header`);
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid request headers',
-        });
+      for (const patternType of patternTypes) {
+        if (containsMaliciousPattern(value, patternType)) {
+          logger.warn(`Malicious pattern detected in ${header} header: ${value.substring(0, 100)}`);
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid request headers',
+          });
+        }
       }
     }
   }
