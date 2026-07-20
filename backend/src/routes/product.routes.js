@@ -56,6 +56,17 @@ router.get(
 );
 
 /**
+ * @route   GET /api/v1/products/export
+ * @desc    Export products to Excel
+ * @access  Private - products:read
+ */
+router.get(
+  '/export',
+  requirePermission('products:read'),
+  productController.exportProducts
+);
+
+/**
  * @route   GET /api/v1/products/expiring
  * @desc    Get expiring products
  * @access  Private - products:read

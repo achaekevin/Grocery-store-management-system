@@ -3,6 +3,7 @@ import ApiResponse from '../utils/ApiResponse.js';
 import { generateBarcodeBase64 } from '../helpers/barcode.js';
 import { generateQRCodeBase64 } from '../helpers/qrcode.js';
 import logger from '../config/logger.js';
+import ExcelJS from 'exceljs';
 
 /**
  * Create product
@@ -200,6 +201,84 @@ export const getExpiringProducts = async (req, res) => {
   }
 };
 
+/**
+ * Export products to Excel
+ */
+export const exportProducts = async (req, res) => {
+  try {
+    const { count, products } = await productService.getProducts(
+      { businessId: req.user.businessId },
+      { page: 1, limit: 10000 }
+    );
+
+    // Create workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Products');
+
+    // Define columns
+    worksheet.columns = [
+      { header: 'SKU', key: 'sku', width: 15 },
+      { header: 'Product Name', key: 'name', width: 30 },
+      { header: 'Barcode', key: 'barcode', width: 20 },
+      { header: 'Category', key: 'category', width: 15 },
+      { header: 'Brand', key: 'brand', width: 15 },
+      { header: 'Unit', key: 'unit', width: 10 },
+      { header: 'Quantity', key: 'quantity', width: 12 },
+      { header: 'Reorder Level', key: 'reorderLevel', width: 15 },
+      { header: 'Cost Price', key: 'costPrice', width: 12 },
+      { header: 'Selling Price', key: 'sellingPrice', width: 12 },
+      { header: 'Taxable', key: 'taxable', width: 10 },
+      { header: 'Expiry Date', key: 'expiryDate', width: 15 },
+    ];
+
+    // Style header row
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4F46E5' },
+    };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+    // Add data rows
+    products.forEach((product) => {
+      worksheet.addRow({
+        sku: product.sku,
+        name: product.name,
+        barcode: product.barcode,
+        category: product.category,
+        brand: product.brand || '',
+        unit: product.unit,
+        quantity: product.quantity,
+        reorderLevel: product.reorderLevel,
+        costPrice: product.costPrice,
+        sellingPrice: product.sellingPrice,
+        taxable: product.taxable ? 'Yes' : 'No',
+        expiryDate: product.expiryDate ? new Date(product.expiryDate).toLocaleDateString() : '',
+      });
+    });
+
+    // Set response headers
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=products_${Date.now()}.xlsx`
+    );
+
+    // Write to response
+    await workbook.xlsx.write(res);
+    
+    logger.info(`Products exported by user ${req.user.id}`);
+    res.end();
+  } catch (error) {
+    logger.error('Export products error:', error);
+    throw error;
+  }
+};
+
 export default {
   createProduct,
   getProducts,
@@ -211,4 +290,5 @@ export default {
   generateQRCode,
   getLowStockProducts,
   getExpiringProducts,
+  exportProducts,
 };
