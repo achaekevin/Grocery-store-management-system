@@ -10,6 +10,7 @@ import db from './models/index.js';
 import redisClient from './config/redis.js';
 import { errorConverter, errorHandler, notFound } from './middleware/errorHandler.js';
 import { generalLimiter } from './middleware/rateLimiter.js';
+import { sanitizeInput, validateHeaders, checkPayloadSize } from './middleware/sanitization.js';
 
 // Import routes
 import routes from './routes/index.js';
@@ -19,19 +20,63 @@ const app = express();
 // Trust proxy
 app.set('trust proxy', 1);
 
-// Security middleware
-app.use(helmet());
+// Security middleware - Enhanced helmet configuration
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true
+  },
+  frameguard: {
+    action: 'deny'
+  },
+  noSniff: true,
+  xssFilter: true,
+}));
 
-// CORS
+// Validate request headers for malicious content
+app.use(validateHeaders);
+
+// Check payload size before parsing
+app.use(checkPayloadSize(10 * 1024 * 1024)); // 10MB limit
+
+// CORS with strict configuration
 app.use(
   cors({
     origin: config.cors.origin,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
+    maxAge: 600, // 10 minutes
   })
 );
 
-// Body parser
-app.use(express.json({ limit: '10mb' }));
+// Body parser with size limits
+app.use(express.json({ 
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    // Verify JSON payload is valid
+    try {
+      JSON.parse(buf);
+    } catch (e) {
+      throw new Error('Invalid JSON payload');
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Compression
@@ -46,6 +91,9 @@ if (config.env === 'development') {
 
 // Rate limiting
 app.use(generalLimiter);
+
+// Input sanitization - Applied to all routes
+app.use(sanitizeInput);
 
 // Static files (uploads)
 app.use('/uploads', express.static('uploads'));
