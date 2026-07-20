@@ -299,10 +299,147 @@ export const getDashboardStats = async (businessId, branchId = null) => {
   };
 };
 
+/**
+ * Get expense report
+ */
+export const getExpenseReport = async (businessId, filters) => {
+  const { branchId, dateFrom, dateTo, categoryId } = filters;
+
+  const where = { businessId };
+
+  if (branchId) where.branchId = branchId;
+  if (categoryId) where.categoryId = categoryId;
+
+  if (dateFrom || dateTo) {
+    where.expenseDate = {};
+    if (dateFrom) where.expenseDate[Op.gte] = dateFrom;
+    if (dateTo) where.expenseDate[Op.lte] = dateTo;
+  }
+
+  // Get all expenses
+  const expenses = await db.Expense.findAll({
+    where,
+    include: [
+      {
+        model: db.Branch,
+        as: 'branch',
+        attributes: ['name'],
+      },
+    ],
+    order: [['expenseDate', 'DESC']],
+  });
+
+  // Summary
+  const summary = await db.Expense.findOne({
+    where,
+    attributes: [
+      [db.sequelize.fn('COUNT', db.sequelize.col('id')), 'totalExpenses'],
+      [db.sequelize.fn('SUM', db.sequelize.col('amount')), 'totalAmount'],
+      [db.sequelize.fn('AVG', db.sequelize.col('amount')), 'averageAmount'],
+    ],
+  });
+
+  // Group by category
+  const byCategory = await db.Expense.findAll({
+    where,
+    attributes: [
+      'category',
+      [db.sequelize.fn('COUNT', db.sequelize.col('id')), 'count'],
+      [db.sequelize.fn('SUM', db.sequelize.col('amount')), 'total'],
+    ],
+    group: ['category'],
+    order: [[db.sequelize.literal('total'), 'DESC']],
+  });
+
+  return {
+    expenses,
+    summary: summary.get(),
+    byCategory,
+  };
+};
+
+/**
+ * Get product performance report
+ */
+export const getProductPerformanceReport = async (businessId, filters) => {
+  const { branchId, dateFrom, dateTo, limit = 20 } = filters;
+
+  const saleWhere = { businessId, status: 'completed' };
+
+  if (branchId) saleWhere.branchId = branchId;
+
+  if (dateFrom || dateTo) {
+    saleWhere.saleDate = {};
+    if (dateFrom) saleWhere.saleDate[Op.gte] = dateFrom;
+    if (dateTo) saleWhere.saleDate[Op.lte] = dateTo;
+  }
+
+  // Top performing products
+  const topProducts = await db.SaleItem.findAll({
+    include: [
+      {
+        model: db.Sale,
+        as: 'sale',
+        where: saleWhere,
+        attributes: [],
+      },
+      {
+        model: db.Product,
+        as: 'product',
+        attributes: ['id', 'name', 'sku', 'costPrice', 'sellingPrice'],
+        include: [
+          { model: db.Category, as: 'category', attributes: ['name'] },
+        ],
+      },
+    ],
+    attributes: [
+      [db.sequelize.fn('SUM', db.sequelize.col('quantity')), 'totalQuantitySold'],
+      [db.sequelize.fn('SUM', db.sequelize.col('SaleItem.total')), 'totalRevenue'],
+      [db.sequelize.fn('COUNT', db.sequelize.literal('DISTINCT sale.id')), 'numberOfSales'],
+    ],
+    group: ['product_id'],
+    order: [[db.sequelize.literal('totalRevenue'), 'DESC']],
+    limit,
+    raw: true,
+  });
+
+  // Worst performing products (lowest sales)
+  const worstProducts = await db.SaleItem.findAll({
+    include: [
+      {
+        model: db.Sale,
+        as: 'sale',
+        where: saleWhere,
+        attributes: [],
+      },
+      {
+        model: db.Product,
+        as: 'product',
+        attributes: ['id', 'name', 'sku'],
+      },
+    ],
+    attributes: [
+      [db.sequelize.fn('SUM', db.sequelize.col('quantity')), 'totalQuantitySold'],
+      [db.sequelize.fn('SUM', db.sequelize.col('SaleItem.total')), 'totalRevenue'],
+    ],
+    group: ['product_id'],
+    order: [[db.sequelize.literal('totalRevenue'), 'ASC']],
+    limit: 10,
+    raw: true,
+  });
+
+  return {
+    topProducts,
+    worstProducts,
+  };
+};
+
 export default {
   getSalesReport,
   getInventoryReport,
   getCustomerReport,
   getProfitLossReport,
   getDashboardStats,
+  getExpenseReport,
+  getProductPerformanceReport,
 };

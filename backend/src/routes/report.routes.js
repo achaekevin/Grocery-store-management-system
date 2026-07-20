@@ -7,6 +7,26 @@ const router = express.Router();
 
 router.use(authenticate);
 
+// New endpoints for frontend report generation
+router.post(
+  '/generate',
+  requirePermission('reports:read'),
+  reportController.generateReport
+);
+
+router.get(
+  '/saved',
+  requirePermission('reports:read'),
+  reportController.getSavedReports
+);
+
+router.get(
+  '/templates',
+  requirePermission('reports:read'),
+  reportController.getReportTemplates
+);
+
+// Existing report endpoints
 router.get(
   '/sales',
   requirePermission('reports:read'),
@@ -47,6 +67,13 @@ router.get(
   '/export/inventory',
   requirePermission('reports:export'),
   reportController.exportInventoryExcel
+);
+
+// Download generated report
+router.get(
+  '/download/:filename',
+  requirePermission('reports:read'),
+  reportController.downloadReport
 );
 
 export default router;
