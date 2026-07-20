@@ -51,7 +51,27 @@ export const truncateText = (text: string, maxLength: number): string => {
   return text.slice(0, maxLength) + '...';
 };
 
-export const getInitials = (name: string): string => {
+export const getInitials = (name: string | { first_name?: string; last_name?: string }): string => {
+  // Handle object with first_name and last_name
+  if (typeof name === 'object') {
+    const firstName = name.first_name?.trim() || '';
+    const lastName = name.last_name?.trim() || '';
+    
+    if (firstName && lastName) {
+      return (firstName[0] + lastName[0]).toUpperCase();
+    }
+    if (firstName) {
+      return firstName.slice(0, 2).toUpperCase();
+    }
+    if (lastName) {
+      return lastName.slice(0, 2).toUpperCase();
+    }
+    return 'U';
+  }
+  
+  // Handle string name
+  if (!name || typeof name !== 'string') return 'U';
+  
   const parts = name.trim().split(' ');
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
