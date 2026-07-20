@@ -39,7 +39,7 @@ export const ReportsPage: React.FC = () => {
 
   const fetchSavedReports = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/reports/saved`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/reports/saved`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Ensure we always set an array
@@ -53,7 +53,7 @@ export const ReportsPage: React.FC = () => {
 
   const fetchTemplates = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/reports/templates`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/reports/templates`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Ensure we always set an array
@@ -69,7 +69,7 @@ export const ReportsPage: React.FC = () => {
     setGeneratingReport(type);
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/reports/generate`,
+        `${import.meta.env.VITE_API_BASE_URL}/reports/generate`,
         {
           type,
           period: 'month',
