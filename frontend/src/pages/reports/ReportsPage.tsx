@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
-import { FileText, Download, Calendar, TrendingUp, Package, DollarSign, Users, Eye, Loader2 } from 'lucide-react';
+import { FileText, Download, Calendar, TrendingUp, Package, DollarSign, Users, Eye, Loader2, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@components/ui/Button';
 import { useAppSelector } from '@hooks/useAppSelector';
 import { useToast } from '@hooks/useToast';
@@ -28,6 +28,7 @@ export const ReportsPage: React.FC = () => {
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [generatingReport, setGeneratingReport] = useState<string | null>(null);
+  const [selectedFormat, setSelectedFormat] = useState<'pdf' | 'excel'>('pdf');
 
   // Fetch saved reports
   useEffect(() => {
@@ -65,37 +66,54 @@ export const ReportsPage: React.FC = () => {
     }
   };
 
-  const generateReport = async (type: string, name: string) => {
-    setGeneratingReport(type);
+  const generateReport = async (type: string, name: string, format: 'pdf' | 'excel') => {
+    setGeneratingReport(`${type}-${format}`);
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/reports/generate`,
         {
           type,
           period: 'month',
-          format: 'pdf'
+          format
         },
         {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          responseType: format === 'pdf' ? 'blob' : 'blob' // Get binary data
         }
       );
 
-      toast.success(`${name} generated successfully!`);
+      // Create blob and download
+      const blob = new Blob([response.data], {
+        type: format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
       
-      // If URL is returned, download the report
-      if (response.data.url) {
-        window.open(response.data.url, '_blank');
-      }
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${type}_report_${new Date().getTime()}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
+      toast.success(`${name} (${format.toUpperCase()}) downloaded successfully!`);
+      
       // Refresh saved reports
       fetchSavedReports();
     } catch (error: any) {
+      console.error('Error generating report:', error);
       if (error.response?.status === 404) {
-        toast.error('Report generation not yet implemented on backend');
+        toast.error('Report generation endpoint not found');
+      } else if (error.response?.status === 401) {
+        toast.error('Unauthorized - please login again');
+      } else if (error.response?.status === 403) {
+        toast.error('You do not have permission to generate reports');
       } else {
         toast.error(`Failed to generate ${name}`);
       }
-      console.error('Error generating report:', error);
     } finally {
       setGeneratingReport(null);
     }
@@ -161,7 +179,7 @@ export const ReportsPage: React.FC = () => {
       <div>
         <h1 className="text-3xl font-bold">Reports</h1>
         <p className="mt-1 text-muted-foreground">
-          Generate and view business reports and insights
+          Generate and download business reports in PDF or Excel format
         </p>
       </div>
 
@@ -169,7 +187,8 @@ export const ReportsPage: React.FC = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {reportTypes.map((report) => {
           const Icon = report.icon;
-          const isGenerating = generatingReport === report.type;
+          const isPdfGenerating = generatingReport === `${report.type}-pdf`;
+          const isExcelGenerating = generatingReport === `${report.type}-excel`;
           
           return (
             <Card key={report.type}>
@@ -183,24 +202,44 @@ export const ReportsPage: React.FC = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   {report.description}
                 </p>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => generateReport(report.type, report.title)}
-                  disabled={isGenerating}
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4 mr-2" />
-                      Generate Report
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => generateReport(report.type, report.title, 'pdf')}
+                    disabled={isPdfGenerating || isExcelGenerating}
+                  >
+                    {isPdfGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-4 w-4 mr-2" />
+                        PDF
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => generateReport(report.type, report.title, 'excel')}
+                    disabled={isPdfGenerating || isExcelGenerating}
+                  >
+                    {isExcelGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                        Excel
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );

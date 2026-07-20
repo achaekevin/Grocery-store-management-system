@@ -45,55 +45,110 @@ export const generateReport = async (req, res) => {
         return res.status(400).json(ApiResponse.error('Invalid report type'));
     }
 
-    // Generate PDF
-    const fileName = `${type}_report_${Date.now()}.pdf`;
-    const uploadsDir = path.join(process.cwd(), 'uploads', 'reports');
-    
-    // Ensure directory exists
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    if (format === 'excel') {
+      // Generate Excel file
+      const ExcelJS = (await import('exceljs')).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet(reportName);
+
+      // Add title
+      worksheet.addRow([reportName]);
+      worksheet.addRow([`Generated: ${new Date().toLocaleDateString()}`]);
+      worksheet.addRow([]);
+
+      // Add data based on report type
+      if (type === 'sales' && reportData.summary) {
+        worksheet.addRow(['Summary']);
+        worksheet.addRow(['Total Sales', reportData.summary.totalSales || 0]);
+        worksheet.addRow(['Total Revenue', `$${reportData.summary.totalRevenue || 0}`]);
+        worksheet.addRow(['Average Order Value', `$${reportData.summary.averageOrderValue || 0}`]);
+      } else if (type === 'inventory' && reportData.summary) {
+        worksheet.addRow(['Summary']);
+        worksheet.addRow(['Total Items', reportData.summary.totalItems || 0]);
+        worksheet.addRow(['Inventory Value', `$${reportData.summary.inventoryValue || 0}`]);
+        worksheet.addRow(['Potential Revenue', `$${reportData.summary.potentialRevenue || 0}`]);
+      } else if (type === 'financial') {
+        worksheet.addRow(['Financial Summary']);
+        worksheet.addRow(['Revenue', `$${reportData.revenue || 0}`]);
+        worksheet.addRow(['Cost of Goods Sold', `$${reportData.cogs || 0}`]);
+        worksheet.addRow(['Gross Profit', `$${reportData.grossProfit || 0}`]);
+        worksheet.addRow(['Expenses', `$${reportData.expenses || 0}`]);
+        worksheet.addRow(['Net Profit', `$${reportData.netProfit || 0}`]);
+        worksheet.addRow(['Profit Margin', reportData.profitMargin || '0%']);
+      } else {
+        // Generic data display
+        worksheet.addRow(['Data']);
+        worksheet.addRow([JSON.stringify(reportData, null, 2)]);
+      }
+
+      // Style the worksheet
+      worksheet.getRow(1).font = { bold: true, size: 16 };
+      worksheet.columns.forEach(column => {
+        column.width = 25;
+      });
+
+      // Send file
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename=${type}_report_${Date.now()}.xlsx`
+      );
+
+      await workbook.xlsx.write(res);
+      res.end();
+    } else {
+      // Generate PDF file
+      const fileName = `${type}_report_${Date.now()}.pdf`;
+      
+      // Create PDF
+      const doc = new PDFDocument({ margin: 50 });
+      
+      // Set response headers
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+      
+      doc.pipe(res);
+
+      // Add content to PDF
+      doc.fontSize(20).text(reportName, { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(12).text(`Generated: ${new Date().toLocaleDateString()}`, { align: 'center' });
+      doc.moveDown(2);
+
+      // Add report data
+      doc.fontSize(14).text('Report Data:', { underline: true });
+      doc.moveDown();
+      
+      if (type === 'sales' && reportData.summary) {
+        doc.fontSize(10);
+        doc.text(`Total Sales: ${reportData.summary.totalSales || 0}`);
+        doc.text(`Total Revenue: $${reportData.summary.totalRevenue || 0}`);
+        doc.text(`Average Order Value: $${reportData.summary.averageOrderValue || 0}`);
+      } else if (type === 'inventory' && reportData.summary) {
+        doc.fontSize(10);
+        doc.text(`Total Items: ${reportData.summary.totalItems || 0}`);
+        doc.text(`Inventory Value: $${reportData.summary.inventoryValue || 0}`);
+        doc.text(`Potential Revenue: $${reportData.summary.potentialRevenue || 0}`);
+      } else if (type === 'financial') {
+        doc.fontSize(10);
+        doc.text(`Revenue: $${reportData.revenue || 0}`);
+        doc.text(`Cost of Goods Sold: $${reportData.cogs || 0}`);
+        doc.text(`Gross Profit: $${reportData.grossProfit || 0}`);
+        doc.text(`Expenses: $${reportData.expenses || 0}`);
+        doc.text(`Net Profit: $${reportData.netProfit || 0}`);
+        doc.text(`Profit Margin: ${reportData.profitMargin || '0%'}`);
+      } else {
+        doc.fontSize(10).text(JSON.stringify(reportData, null, 2));
+      }
+
+      doc.end();
     }
-
-    const filePath = path.join(uploadsDir, fileName);
-    
-    // Create PDF
-    const doc = new PDFDocument({ margin: 50 });
-    const stream = fs.createWriteStream(filePath);
-    
-    doc.pipe(stream);
-
-    // Add content to PDF
-    doc.fontSize(20).text(reportName, { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Generated: ${new Date().toLocaleDateString()}`, { align: 'center' });
-    doc.moveDown(2);
-
-    // Add report data
-    doc.fontSize(10).text(JSON.stringify(reportData, null, 2));
-
-    doc.end();
-
-    // Wait for PDF to be written
-    await new Promise((resolve, reject) => {
-      stream.on('finish', resolve);
-      stream.on('error', reject);
-    });
-
-    // Save report record to database (optional)
-    const reportRecord = {
-      id: `report_${Date.now()}`,
-      name: `${reportName} - ${new Date().toLocaleDateString()}`,
-      type,
-      createdAt: new Date().toISOString(),
-      url: `/api/reports/download/${fileName}`,
-      businessId,
-      userId
-    };
-
-    res.json(ApiResponse.success('Report generated successfully', reportRecord));
   } catch (error) {
     console.error('Error generating report:', error);
-    res.status(500).json(ApiResponse.error('Failed to generate report'));
+    res.status(500).json(ApiResponse.error('Failed to generate report', error.message));
   }
 };
 
