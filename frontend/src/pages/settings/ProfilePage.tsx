@@ -3,12 +3,81 @@ import { useAppSelector } from '@hooks/useAppSelector';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
-import { User, Mail, Phone, Building2, Shield, Calendar } from 'lucide-react';
+import { User, Mail, Phone, Building2, Shield, Calendar, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { formatDate } from '@utils/format';
+import { useToast } from '@hooks/useToast';
+import axios from 'axios';
 
 export const ProfilePage: React.FC = () => {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, token } = useAppSelector((state) => state.auth);
+  const toast = useToast();
+  
   const [isEditing, setIsEditing] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+
+  const handlePasswordChange = async () => {
+    // Validation
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      toast.error('Please fill in all password fields');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters long');
+      return;
+    }
+
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      toast.error('New password must be different from current password');
+      return;
+    }
+
+    setChangingPassword(true);
+
+    try {
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_BASE_URL}/auth/change-password`,
+        {
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+          confirmPassword: passwordData.confirmPassword,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data?.success) {
+        toast.success('Password changed successfully!');
+        // Reset form
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+      }
+    } catch (error: any) {
+      console.error('Password change error:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to change password';
+      toast.error(errorMessage);
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -127,6 +196,99 @@ export const ProfilePage: React.FC = () => {
                   </Button>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Change Password */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                Change Password
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Update your password to keep your account secure. Use a strong password with at least 8 characters.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Current Password</label>
+                  <div className="relative mt-1">
+                    <Input
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                      placeholder="Enter current password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">New Password</label>
+                  <div className="relative mt-1">
+                    <Input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                      placeholder="Enter new password (min. 8 characters)"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {passwordData.newPassword && passwordData.newPassword.length < 8 && (
+                    <p className="mt-1 text-xs text-red-600">Password must be at least 8 characters</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Confirm New Password</label>
+                  <div className="relative mt-1">
+                    <Input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                      placeholder="Re-enter new password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword && (
+                    <p className="mt-1 text-xs text-red-600">Passwords do not match</p>
+                  )}
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <Button
+                    onClick={handlePasswordChange}
+                    disabled={changingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+                    icon={changingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+                  >
+                    {changingPassword ? 'Changing Password...' : 'Change Password'}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
