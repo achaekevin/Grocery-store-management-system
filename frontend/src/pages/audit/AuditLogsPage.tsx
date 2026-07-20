@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
@@ -27,6 +28,7 @@ interface AuditLog {
 export const AuditLogsPage: React.FC = () => {
   const { token } = useAppSelector((state) => state.auth);
   const toast = useToast();
+  const navigate = useNavigate();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -107,7 +109,7 @@ export const AuditLogsPage: React.FC = () => {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="transition-all hover:shadow-lg hover:scale-[1.02] hover:border-primary/50 cursor-pointer">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Logs</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
@@ -118,7 +120,7 @@ export const AuditLogsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="transition-all hover:shadow-lg hover:scale-[1.02] hover:border-primary/50 cursor-pointer">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Today</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -133,31 +135,35 @@ export const AuditLogsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Creates</CardTitle>
-            <div className="h-2 w-2 rounded-full bg-green-500"></div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {logs.filter(log => log.action === 'CREATE').length}
-            </div>
-            <p className="text-xs text-muted-foreground">New records</p>
-          </CardContent>
-        </Card>
+        <div onClick={() => setFilterAction('CREATE')} className="cursor-pointer">
+          <Card className="transition-all hover:shadow-lg hover:scale-[1.02] hover:border-primary/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Creates</CardTitle>
+              <div className="h-2 w-2 rounded-full bg-green-500"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {logs.filter(log => log.action === 'CREATE').length}
+              </div>
+              <p className="text-xs text-muted-foreground">New records</p>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Deletes</CardTitle>
-            <div className="h-2 w-2 rounded-full bg-red-500"></div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {logs.filter(log => log.action === 'DELETE').length}
-            </div>
-            <p className="text-xs text-muted-foreground">Deleted records</p>
-          </CardContent>
-        </Card>
+        <div onClick={() => setFilterAction('DELETE')} className="cursor-pointer">
+          <Card className="transition-all hover:shadow-lg hover:scale-[1.02] hover:border-primary/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Deletes</CardTitle>
+              <div className="h-2 w-2 rounded-full bg-red-500"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {logs.filter(log => log.action === 'DELETE').length}
+              </div>
+              <p className="text-xs text-muted-foreground">Deleted records</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Filters */}

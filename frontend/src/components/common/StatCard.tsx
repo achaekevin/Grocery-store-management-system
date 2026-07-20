@@ -28,7 +28,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   const isNegative = change && change < 0;
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 transition-all hover:shadow-lg hover:scale-[1.02] hover:border-primary/50">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>

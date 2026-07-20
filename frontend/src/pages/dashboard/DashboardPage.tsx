@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { StatCard } from '@components/common/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
 import {
@@ -78,6 +79,8 @@ const recentActivities = [
 ];
 
 export const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -90,72 +93,88 @@ export const DashboardPage: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Today's Sales"
-          value={formatCurrency(389000)}
-          icon={DollarSign}
-          iconColor="text-green-600"
-          iconBgColor="bg-green-100 dark:bg-green-900/20"
-          change={12.5}
-          changeLabel="from yesterday"
-        />
-        <StatCard
-          title="Monthly Revenue"
-          value={formatCurrency(8400000)}
-          icon={TrendingUp}
-          iconColor="text-blue-600"
-          iconBgColor="bg-blue-100 dark:bg-blue-900/20"
-          change={8.3}
-          changeLabel="from last month"
-        />
-        <StatCard
-          title="Products"
-          value="1,234"
-          icon={Package}
-          iconColor="text-purple-600"
-          iconBgColor="bg-purple-100 dark:bg-purple-900/20"
-        />
-        <StatCard
-          title="Low Stock Items"
-          value="23"
-          icon={AlertTriangle}
-          iconColor="text-orange-600"
-          iconBgColor="bg-orange-100 dark:bg-orange-900/20"
-          change={-5}
-          changeLabel="from last week"
-        />
+        <div onClick={() => navigate('/sales')} className="cursor-pointer">
+          <StatCard
+            title="Today's Sales"
+            value={formatCurrency(389000)}
+            icon={DollarSign}
+            iconColor="text-green-600"
+            iconBgColor="bg-green-100 dark:bg-green-900/20"
+            change={12.5}
+            changeLabel="from yesterday"
+          />
+        </div>
+        <div onClick={() => navigate('/reports')} className="cursor-pointer">
+          <StatCard
+            title="Monthly Revenue"
+            value={formatCurrency(8400000)}
+            icon={TrendingUp}
+            iconColor="text-blue-600"
+            iconBgColor="bg-blue-100 dark:bg-blue-900/20"
+            change={8.3}
+            changeLabel="from last month"
+          />
+        </div>
+        <div onClick={() => navigate('/products')} className="cursor-pointer">
+          <StatCard
+            title="Products"
+            value="1,234"
+            icon={Package}
+            iconColor="text-purple-600"
+            iconBgColor="bg-purple-100 dark:bg-purple-900/20"
+          />
+        </div>
+        <div onClick={() => navigate('/inventory')} className="cursor-pointer">
+          <StatCard
+            title="Low Stock Items"
+            value="23"
+            icon={AlertTriangle}
+            iconColor="text-orange-600"
+            iconBgColor="bg-orange-100 dark:bg-orange-900/20"
+            change={-5}
+            changeLabel="from last week"
+          />
+        </div>
       </div>
 
       {/* Secondary Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Customers"
-          value="2,458"
-          icon={Users}
-          iconColor="text-cyan-600"
-          iconBgColor="bg-cyan-100 dark:bg-cyan-900/20"
-        />
-        <StatCard
-          title="Suppliers"
-          value="127"
-          icon={Truck}
-          iconColor="text-indigo-600"
-          iconBgColor="bg-indigo-100 dark:bg-indigo-900/20"
-        />
-        <StatCard
-          title="Branches"
-          value="4"
-          icon={Building2}
-          iconColor="text-pink-600"
-          iconBgColor="bg-pink-100 dark:bg-pink-900/20"
-        />
-        <StatCard
-          title="Expired Products"
-          value="8"
-          icon={Calendar}
-          iconColor="text-red-600"
-          iconBgColor="bg-red-100 dark:bg-red-900/20"
-        />
+        <div onClick={() => navigate('/customers')} className="cursor-pointer">
+          <StatCard
+            title="Customers"
+            value="2,458"
+            icon={Users}
+            iconColor="text-cyan-600"
+            iconBgColor="bg-cyan-100 dark:bg-cyan-900/20"
+          />
+        </div>
+        <div onClick={() => navigate('/suppliers')} className="cursor-pointer">
+          <StatCard
+            title="Suppliers"
+            value="127"
+            icon={Truck}
+            iconColor="text-indigo-600"
+            iconBgColor="bg-indigo-100 dark:bg-indigo-900/20"
+          />
+        </div>
+        <div onClick={() => navigate('/branches')} className="cursor-pointer">
+          <StatCard
+            title="Branches"
+            value="4"
+            icon={Building2}
+            iconColor="text-pink-600"
+            iconBgColor="bg-pink-100 dark:bg-pink-900/20"
+          />
+        </div>
+        <div onClick={() => navigate('/inventory')} className="cursor-pointer">
+          <StatCard
+            title="Expired Products"
+            value="8"
+            icon={Calendar}
+            iconColor="text-red-600"
+            iconBgColor="bg-red-100 dark:bg-red-900/20"
+          />
+        </div>
       </div>
 
       {/* Charts Row 1 */}
