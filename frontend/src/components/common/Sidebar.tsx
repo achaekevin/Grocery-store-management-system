@@ -24,13 +24,14 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useAppSelector } from '@hooks/useAppSelector';
+import { hasPermission } from '@config/permissions';
 
 interface NavItem {
   label: string;
   icon: React.ReactNode;
   path: string;
   badge?: number;
-  roles?: string[];
+  module?: string; // Permission module name
 }
 
 const navigationItems: NavItem[] = [
@@ -38,95 +39,85 @@ const navigationItems: NavItem[] = [
     label: 'Dashboard',
     icon: <LayoutDashboard className="h-5 w-5" />,
     path: '/dashboard',
+    module: 'dashboard',
   },
   {
     label: 'Point of Sale',
     icon: <ShoppingCart className="h-5 w-5" />,
     path: '/pos',
-    roles: ['Super Admin', 'Branch Manager', 'Cashier'],
+    module: 'pos',
   },
   {
     label: 'Products',
     icon: <Package className="h-5 w-5" />,
     path: '/products',
+    module: 'products',
   },
   {
     label: 'Inventory',
     icon: <Warehouse className="h-5 w-5" />,
     path: '/inventory',
-  },
-  {
-    label: 'Barcodes',
-    icon: <BarChart3 className="h-5 w-5" />,
-    path: '/barcodes',
+    module: 'inventory',
   },
   {
     label: 'Sales',
     icon: <ShoppingBag className="h-5 w-5" />,
     path: '/sales',
-  },
-  {
-    label: 'Purchases',
-    icon: <FileText className="h-5 w-5" />,
-    path: '/purchases',
+    module: 'sales',
   },
   {
     label: 'Customers',
     icon: <Users className="h-5 w-5" />,
     path: '/customers',
-  },
-  {
-    label: 'Loyalty',
-    icon: <Gift className="h-5 w-5" />,
-    path: '/loyalty',
+    module: 'customers',
   },
   {
     label: 'Suppliers',
     icon: <Truck className="h-5 w-5" />,
     path: '/suppliers',
-  },
-  {
-    label: 'Finance',
-    icon: <DollarSign className="h-5 w-5" />,
-    path: '/finance',
+    module: 'suppliers',
   },
   {
     label: 'Expenses',
     icon: <CreditCard className="h-5 w-5" />,
     path: '/expenses',
-  },
-  {
-    label: 'M-Pesa',
-    icon: <Smartphone className="h-5 w-5" />,
-    path: '/mpesa',
-  },
-  {
-    label: 'Branches',
-    icon: <Building2 className="h-5 w-5" />,
-    path: '/branches',
-    roles: ['Super Admin'],
+    module: 'expenses',
   },
   {
     label: 'Reports',
     icon: <FileText className="h-5 w-5" />,
     path: '/reports',
+    module: 'reports',
+  },
+  {
+    label: 'Analytics',
+    icon: <BarChart3 className="h-5 w-5" />,
+    path: '/analytics',
+    module: 'analytics',
+  },
+  {
+    label: 'Branches',
+    icon: <Building2 className="h-5 w-5" />,
+    path: '/branches',
+    module: 'branches',
   },
   {
     label: 'Users & Roles',
     icon: <UserCog className="h-5 w-5" />,
     path: '/users',
-    roles: ['Super Admin', 'Branch Manager'],
+    module: 'users',
   },
   {
     label: 'Audit Logs',
     icon: <Shield className="h-5 w-5" />,
     path: '/audit-logs',
-    roles: ['Super Admin'],
+    module: 'roles',
   },
   {
     label: 'Settings',
     icon: <Settings className="h-5 w-5" />,
     path: '/settings',
+    module: 'settings',
   },
 ];
 
@@ -139,10 +130,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
   const location = useLocation();
   const { user } = useAppSelector((state) => state.auth);
 
-  const hasAccess = (item: NavItem) => {
-    if (!item.roles) return true;
-    return user && item.roles.includes(user.role);
+  const canAccess = (item: NavItem) => {
+    if (!item.module) return true;
+    return hasPermission(user?.role?.name, item.module);
   };
+
+  const accessibleItems = navigationItems.filter(canAccess);
 
   return (
     <aside
@@ -176,7 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2 scrollbar-hide">
         <div className="space-y-1">
-          {navigationItems.filter(hasAccess).map((item) => {
+          {accessibleItems.map((item) => {
             const isActive = location.pathname === item.path;
 
             return (
@@ -208,6 +201,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
           })}
         </div>
       </nav>
+      
+      {/* Role Badge */}
+      {!isCollapsed && user && (
+        <div className="border-t border-slate-800 p-4">
+          <div className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2">
+            <Shield className="h-4 w-4 text-primary" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-slate-400">Current Role</p>
+              <p className="text-sm font-medium truncate">{user.role?.name || 'User'}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };
