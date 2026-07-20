@@ -82,6 +82,7 @@ const sanitizeString = (value, options = {}) => {
     allowHtml = false,
     stripHtml = true,
     trim = true,
+    skipEscape = false, // Don't escape for certain fields like email
   } = options;
 
   let sanitized = value;
@@ -108,17 +109,19 @@ const sanitizeString = (value, options = {}) => {
       .replace(/on\w+\s*=/gi, '');
   }
 
-  // Escape HTML entities
-  sanitized = validator.escape(sanitized);
+  // Only escape HTML entities if not skipped (skip for email, password, etc.)
+  if (!skipEscape) {
+    sanitized = validator.escape(sanitized);
+  }
 
-  // Check for SQL injection patterns
-  if (containsMaliciousPattern(sanitized, 'sqlInjection')) {
+  // Check for SQL injection patterns (but not for passwords which may contain special chars)
+  if (!skipEscape && containsMaliciousPattern(sanitized, 'sqlInjection')) {
     logger.warn(`Potential SQL injection attempt detected: ${sanitized.substring(0, 100)}`);
     throw new ApiError(400, 'Invalid input detected. Please check your data.');
   }
 
   // Check for command injection
-  if (containsMaliciousPattern(sanitized, 'commandInjection')) {
+  if (!skipEscape && containsMaliciousPattern(sanitized, 'commandInjection')) {
     logger.warn(`Potential command injection attempt detected: ${sanitized.substring(0, 100)}`);
     throw new ApiError(400, 'Invalid input detected. Please check your data.');
   }
@@ -129,7 +132,7 @@ const sanitizeString = (value, options = {}) => {
 /**
  * Sanitize object recursively
  */
-const sanitizeObject = (obj, depth = 0, maxDepth = 10) => {
+const sanitizeObject = (obj, depth = 0, maxDepth = 10, parentKey = '') => {
   if (depth > maxDepth) {
     throw new ApiError(400, 'Input object is too deeply nested');
   }
@@ -142,7 +145,7 @@ const sanitizeObject = (obj, depth = 0, maxDepth = 10) => {
     if (obj.length > 1000) {
       throw new ApiError(400, 'Array size exceeds maximum limit of 1000 items');
     }
-    return obj.map(item => sanitizeObject(item, depth + 1, maxDepth));
+    return obj.map(item => sanitizeObject(item, depth + 1, maxDepth, parentKey));
   }
 
   if (typeof obj === 'object') {
@@ -153,8 +156,11 @@ const sanitizeObject = (obj, depth = 0, maxDepth = 10) => {
 
     const sanitized = {};
     for (const key of keys) {
+      // Don't sanitize certain sensitive fields
+      const skipEscape = ['password', 'email', 'currentPassword', 'newPassword', 'confirmPassword'].includes(key);
+      
       // Sanitize key name
-      const sanitizedKey = sanitizeString(key, { maxLength: 100, stripHtml: true });
+      const sanitizedKey = sanitizeString(key, { maxLength: 100, stripHtml: true, skipEscape: true });
       
       // Skip proto pollution attempts
       if (['__proto__', 'constructor', 'prototype'].includes(sanitizedKey.toLowerCase())) {
@@ -162,13 +168,21 @@ const sanitizeObject = (obj, depth = 0, maxDepth = 10) => {
         continue;
       }
 
-      sanitized[sanitizedKey] = sanitizeObject(obj[key], depth + 1, maxDepth);
+      const value = obj[key];
+      
+      // Handle different types
+      if (typeof value === 'string') {
+        sanitized[sanitizedKey] = sanitizeString(value, { skipEscape });
+      } else {
+        sanitized[sanitizedKey] = sanitizeObject(value, depth + 1, maxDepth, sanitizedKey);
+      }
     }
     return sanitized;
   }
 
   if (typeof obj === 'string') {
-    return sanitizeString(obj);
+    const skipEscape = ['password', 'email', 'currentPassword', 'newPassword', 'confirmPassword'].includes(parentKey);
+    return sanitizeString(obj, { skipEscape });
   }
 
   // Numbers, booleans, etc. pass through
