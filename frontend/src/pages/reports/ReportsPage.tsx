@@ -31,18 +31,23 @@ export const ReportsPage: React.FC = () => {
 
   // Fetch saved reports
   useEffect(() => {
-    fetchSavedReports();
-    fetchTemplates();
-  }, []);
+    if (token) {
+      fetchSavedReports();
+      fetchTemplates();
+    }
+  }, [token]);
 
   const fetchSavedReports = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/reports/saved`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setSavedReports(response.data || []);
+      // Ensure we always set an array
+      setSavedReports(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching saved reports:', error);
+      // Always set empty array on error
+      setSavedReports([]);
     }
   };
 
@@ -51,9 +56,12 @@ export const ReportsPage: React.FC = () => {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/reports/templates`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setTemplates(response.data || []);
+      // Ensure we always set an array
+      setTemplates(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching templates:', error);
+      // Always set empty array on error
+      setTemplates([]);
     }
   };
 
@@ -205,7 +213,7 @@ export const ReportsPage: React.FC = () => {
           <CardTitle>Recent Reports</CardTitle>
         </CardHeader>
         <CardContent>
-          {savedReports.length === 0 ? (
+          {!Array.isArray(savedReports) || savedReports.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <FileText className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Reports Generated</h3>
