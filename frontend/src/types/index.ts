@@ -33,6 +33,9 @@ export interface User {
   phone?: string;
   avatar?: string;
   tenantId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  lastLoginAt?: string;
 }
 
 export interface AuthState {
