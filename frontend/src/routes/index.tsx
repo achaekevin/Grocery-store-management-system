@@ -22,6 +22,9 @@ import { SalesPage } from '@pages/sales/SalesPage';
 import { ExpensesPage } from '@pages/expenses/ExpensesPage';
 import { ReportsPage } from '@pages/reports/ReportsPage';
 import { AnalyticsPage } from '@pages/analytics/AnalyticsPage';
+import { UsersPage } from '@pages/users/UsersPage';
+import { InventoryPage } from '@pages/inventory/InventoryPage';
+import { AuditLogsPage } from '@pages/audit/AuditLogsPage';
 
 // POS Pages
 import { POSPage } from '@pages/pos/POSPage';
@@ -103,6 +106,18 @@ export const router = createBrowserRouter([
       {
         path: 'analytics',
         element: <AnalyticsPage />,
+      },
+      {
+        path: 'users',
+        element: <UsersPage />,
+      },
+      {
+        path: 'inventory',
+        element: <InventoryPage />,
+      },
+      {
+        path: 'audit-logs',
+        element: <AuditLogsPage />,
       },
     ],
   },
