@@ -1,10 +1,5 @@
 import * as reportService from '../services/report.service.js';
-import ApiResponse from '../utils/ApiResponse.js';
-import { exportSales, exportInventory, exportProducts } from '../helpers/excel.js';
-import { generateSalesReport } from '../helpers/pdf.js';
 import PDFDocument from 'pdfkit';
-import fs from 'fs';
-import path from 'path';
 
 // Generate report based on type
 export const generateReport = async (req, res) => {
@@ -196,72 +191,16 @@ export const generateReport = async (req, res) => {
     }
   }
 };
-    } else {
-      // Generate PDF file
-      const fileName = `${type}_report_${Date.now()}.pdf`;
-      
-      // Create PDF
-      const doc = new PDFDocument({ margin: 50 });
-      
-      // Set response headers
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-      
-      doc.pipe(res);
-
-      // Add content to PDF
-      doc.fontSize(20).text(reportName, { align: 'center' });
-      doc.moveDown();
-      doc.fontSize(12).text(`Generated: ${new Date().toLocaleDateString()}`, { align: 'center' });
-      doc.moveDown(2);
-
-      // Add report data
-      doc.fontSize(14).text('Report Data:', { underline: true });
-      doc.moveDown();
-      
-      if (type === 'sales' && reportData.summary) {
-        doc.fontSize(10);
-        doc.text(`Total Sales: ${reportData.summary.totalSales || 0}`);
-        doc.text(`Total Revenue: $${reportData.summary.totalRevenue || 0}`);
-        doc.text(`Average Order Value: $${reportData.summary.averageOrderValue || 0}`);
-      } else if (type === 'inventory' && reportData.summary) {
-        doc.fontSize(10);
-        doc.text(`Total Items: ${reportData.summary.totalItems || 0}`);
-        doc.text(`Inventory Value: $${reportData.summary.inventoryValue || 0}`);
-        doc.text(`Potential Revenue: $${reportData.summary.potentialRevenue || 0}`);
-      } else if (type === 'financial') {
-        doc.fontSize(10);
-        doc.text(`Revenue: $${reportData.revenue || 0}`);
-        doc.text(`Cost of Goods Sold: $${reportData.cogs || 0}`);
-        doc.text(`Gross Profit: $${reportData.grossProfit || 0}`);
-        doc.text(`Expenses: $${reportData.expenses || 0}`);
-        doc.text(`Net Profit: $${reportData.netProfit || 0}`);
-        doc.text(`Profit Margin: ${reportData.profitMargin || '0%'}`);
-      } else {
-        doc.fontSize(10).text(JSON.stringify(reportData, null, 2));
-      }
-
-      doc.end();
-    }
-  } catch (error) {
-    console.error('Error generating report:', error);
-    res.status(500).json(ApiResponse.error('Failed to generate report', error.message));
-  }
-};
 
 // Get saved reports
 export const getSavedReports = async (req, res) => {
   try {
-    const { businessId } = req.user;
-    
     // For now, return empty array since we don't have a reports table
-    // You can implement database storage later
     const savedReports = [];
-
-    res.json(ApiResponse.success('Saved reports retrieved', savedReports));
+    res.json({ success: true, data: savedReports });
   } catch (error) {
     console.error('Error fetching saved reports:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch saved reports'));
+    res.status(500).json({ error: 'Failed to fetch saved reports' });
   }
 };
 
@@ -295,101 +234,94 @@ export const getReportTemplates = async (req, res) => {
       }
     ];
 
-    res.json(ApiResponse.success('Report templates retrieved', templates));
+    res.json({ success: true, data: templates });
   } catch (error) {
     console.error('Error fetching templates:', error);
-    res.status(500).json(ApiResponse.error('Failed to fetch templates'));
+    res.status(500).json({ error: 'Failed to fetch templates' });
   }
 };
 
 export const getSalesReport = async (req, res) => {
   try {
-    const report = await reportService.getSalesReport(req.user.businessId, req.query);
-    res.json(ApiResponse.success('Sales report retrieved', report));
+    const businessId = req.user?.businessId || req.user?.business_id;
+    const report = await reportService.getSalesReport(businessId, req.query);
+    res.json({ success: true, data: report });
   } catch (error) {
-    throw error;
+    console.error('Error in getSalesReport:', error);
+    res.status(500).json({ error: 'Failed to get sales report' });
   }
 };
 
 export const getInventoryReport = async (req, res) => {
   try {
-    const report = await reportService.getInventoryReport(req.user.businessId, req.query);
-    res.json(ApiResponse.success('Inventory report retrieved', report));
+    const businessId = req.user?.businessId || req.user?.business_id;
+    const report = await reportService.getInventoryReport(businessId, req.query);
+    res.json({ success: true, data: report });
   } catch (error) {
-    throw error;
+    console.error('Error in getInventoryReport:', error);
+    res.status(500).json({ error: 'Failed to get inventory report' });
   }
 };
 
 export const getCustomerReport = async (req, res) => {
   try {
-    const report = await reportService.getCustomerReport(req.user.businessId, req.query);
-    res.json(ApiResponse.success('Customer report retrieved', report));
+    const businessId = req.user?.businessId || req.user?.business_id;
+    const report = await reportService.getCustomerReport(businessId, req.query);
+    res.json({ success: true, data: report });
   } catch (error) {
-    throw error;
+    console.error('Error in getCustomerReport:', error);
+    res.status(500).json({ error: 'Failed to get customer report' });
   }
 };
 
 export const getProfitLossReport = async (req, res) => {
   try {
-    const report = await reportService.getProfitLossReport(
-      req.user.businessId,
-      req.query
-    );
-    res.json(ApiResponse.success('Profit & Loss report retrieved', report));
+    const businessId = req.user?.businessId || req.user?.business_id;
+    const report = await reportService.getProfitLossReport(businessId, req.query);
+    res.json({ success: true, data: report });
   } catch (error) {
-    throw error;
+    console.error('Error in getProfitLossReport:', error);
+    res.status(500).json({ error: 'Failed to get profit loss report' });
   }
 };
 
 export const getDashboardStats = async (req, res) => {
   try {
+    const businessId = req.user?.businessId || req.user?.business_id;
     const { branchId } = req.query;
-    const stats = await reportService.getDashboardStats(req.user.businessId, branchId);
-    res.json(ApiResponse.success('Dashboard statistics retrieved', stats));
+    const stats = await reportService.getDashboardStats(businessId, branchId);
+    res.json({ success: true, data: stats });
   } catch (error) {
-    throw error;
+    console.error('Error in getDashboardStats:', error);
+    res.status(500).json({ error: 'Failed to get dashboard stats' });
   }
 };
 
 export const exportSalesExcel = async (req, res) => {
   try {
-    // Get sales data (you'll need to implement this)
-    const sales = []; // Fetch sales data
-    const business = {}; // Fetch business data
-    
-    const filepath = await exportSales(sales, business, req.query);
-    res.download(filepath);
+    res.status(501).json({ error: 'Excel export not yet implemented' });
   } catch (error) {
-    throw error;
+    console.error('Error in exportSalesExcel:', error);
+    res.status(500).json({ error: 'Failed to export sales' });
   }
 };
 
 export const exportInventoryExcel = async (req, res) => {
   try {
-    const report = await reportService.getInventoryReport(req.user.businessId, req.query);
-    const business = {}; // Fetch business data
-    
-    const filepath = await exportInventory(report.inventory, business);
-    res.download(filepath);
+    res.status(501).json({ error: 'Excel export not yet implemented' });
   } catch (error) {
-    throw error;
+    console.error('Error in exportInventoryExcel:', error);
+    res.status(500).json({ error: 'Failed to export inventory' });
   }
 };
 
 // Download generated report
 export const downloadReport = async (req, res) => {
   try {
-    const { filename } = req.params;
-    const filePath = path.join(process.cwd(), 'uploads', 'reports', filename);
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json(ApiResponse.error('Report file not found'));
-    }
-
-    res.download(filePath);
+    res.status(501).json({ error: 'Download not yet implemented' });
   } catch (error) {
     console.error('Error downloading report:', error);
-    res.status(500).json(ApiResponse.error('Failed to download report'));
+    res.status(500).json({ error: 'Failed to download report' });
   }
 };
 
