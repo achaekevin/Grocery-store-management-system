@@ -28,7 +28,8 @@ export const ReportsPage: React.FC = () => {
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [loading, setLoading] = useState(false);
   const [generatingReport, setGeneratingReport] = useState<string | null>(null);
-  const [selectedFormat, setSelectedFormat] = useState<'pdf' | 'excel'>('pdf');
+
+  console.log('ReportsPage - Token exists:', !!token);
 
   // Fetch saved reports
   useEffect(() => {
@@ -67,8 +68,18 @@ export const ReportsPage: React.FC = () => {
   };
 
   const generateReport = async (type: string, name: string, format: 'pdf' | 'excel') => {
+    console.log('Generate Report clicked:', { type, name, format, hasToken: !!token });
+    
+    if (!token) {
+      toast.error('Please login to generate reports');
+      return;
+    }
+
     setGeneratingReport(`${type}-${format}`);
+    
     try {
+      console.log('Making API call to:', `${import.meta.env.VITE_API_BASE_URL}/reports/generate`);
+      
       const response = await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/reports/generate`,
         {
@@ -81,9 +92,11 @@ export const ReportsPage: React.FC = () => {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          responseType: format === 'pdf' ? 'blob' : 'blob' // Get binary data
+          responseType: 'blob' // Get binary data
         }
       );
+
+      console.log('Report generated successfully, downloading...');
 
       // Create blob and download
       const blob = new Blob([response.data], {
@@ -105,14 +118,18 @@ export const ReportsPage: React.FC = () => {
       fetchSavedReports();
     } catch (error: any) {
       console.error('Error generating report:', error);
+      console.error('Error response:', error.response);
+      
       if (error.response?.status === 404) {
-        toast.error('Report generation endpoint not found');
+        toast.error('Report generation endpoint not found - backend may need restart');
       } else if (error.response?.status === 401) {
         toast.error('Unauthorized - please login again');
       } else if (error.response?.status === 403) {
         toast.error('You do not have permission to generate reports');
+      } else if (error.code === 'ERR_NETWORK') {
+        toast.error('Cannot connect to backend server');
       } else {
-        toast.error(`Failed to generate ${name}`);
+        toast.error(`Failed to generate ${name}: ${error.message}`);
       }
     } finally {
       setGeneratingReport(null);
@@ -181,6 +198,20 @@ export const ReportsPage: React.FC = () => {
         <p className="mt-1 text-muted-foreground">
           Generate and download business reports in PDF or Excel format
         </p>
+        {/* Debug Info */}
+        <div className="mt-2 text-sm text-gray-500">
+          Auth Token: {token ? '✓ Present' : '✗ Missing'} | 
+          API URL: {import.meta.env.VITE_API_BASE_URL || 'NOT SET'}
+        </div>
+        <Button 
+          onClick={() => {
+            console.log('Test button clicked!');
+            toast.success('Buttons are clickable!');
+          }}
+          className="mt-2"
+        >
+          Test Button Click
+        </Button>
       </div>
 
       {/* Report Types */}
