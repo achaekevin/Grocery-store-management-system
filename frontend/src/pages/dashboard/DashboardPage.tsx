@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StatCard } from '@components/common/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
@@ -11,15 +11,13 @@ import {
   Truck,
   Building2,
   TrendingUp,
+  Loader2,
 } from 'lucide-react';
 import {
   AreaChart,
   Area,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell,
   LineChart,
   Line,
   XAxis,
@@ -30,56 +28,161 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { formatCurrency } from '@utils/format';
-import { Badge } from '@components/ui/Badge';
+import { useAppSelector } from '@hooks/useAppSelector';
+import { useToast } from '@hooks/useToast';
+import axios from 'axios';
 
-const dailySalesData = [
-  { day: 'Mon', sales: 187400, orders: 212 },
-  { day: 'Tue', sales: 143200, orders: 178 },
-  { day: 'Wed', sales: 234500, orders: 289 },
-  { day: 'Thu', sales: 198000, orders: 244 },
-  { day: 'Fri', sales: 312000, orders: 387 },
-  { day: 'Sat', sales: 445000, orders: 512 },
-  { day: 'Sun', sales: 389000, orders: 456 },
-];
-
-const monthlySalesData = [
-  { month: 'Jan', revenue: 4200000, expenses: 1800000 },
-  { month: 'Feb', revenue: 3900000, expenses: 1650000 },
-  { month: 'Mar', revenue: 4800000, expenses: 1950000 },
-  { month: 'Apr', revenue: 5100000, expenses: 2100000 },
-  { month: 'May', revenue: 4600000, expenses: 1900000 },
-  { month: 'Jun', revenue: 5400000, expenses: 2200000 },
-];
-
-const topProducts = [
-  { name: 'Milk 1L', sales: 2345 },
-  { name: 'Bread', sales: 1890 },
-  { name: 'Water 500ml', sales: 1654 },
-  { name: 'Coke 500ml', sales: 1432 },
-  { name: 'Eggs Tray', sales: 1298 },
-];
-
-const categoryData = [
-  { name: 'Dairy', value: 28 },
-  { name: 'Beverages', value: 22 },
-  { name: 'Bakery', value: 18 },
-  { name: 'Fresh Produce', value: 15 },
-  { name: 'Pantry', value: 12 },
-  { name: 'Other', value: 5 },
-];
-
-const COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2'];
-
-const recentActivities = [
-  { id: 1, action: 'Sale completed', desc: 'KSh 4,250 - CBD Branch', time: '2 min ago', type: 'success' },
-  { id: 2, action: 'Low stock alert', desc: 'Tomatoes 1kg - 12 units left', time: '5 min ago', type: 'warning' },
-  { id: 3, action: 'New customer', desc: 'Alice Wanjiku registered', time: '12 min ago', type: 'info' },
-  { id: 4, action: 'Purchase order', desc: 'PO-2025-0088 approved', time: '1 hr ago', type: 'success' },
-  { id: 5, action: 'Product expired', desc: 'Chicken Breast 500g', time: '2 hrs ago', type: 'danger' },
-];
+interface DashboardStats {
+  todaySales: number;
+  todayOrders: number;
+  monthlySales: number;
+  monthlyOrders: number;
+  products: number;
+  customers: number;
+  suppliers: number;
+  lowStock: number;
+  expiredProducts: number;
+  pendingOrders: number;
+  revenueTrend: Array<{ date: string; revenue: number; orders: number }>;
+  topProducts: Array<{ productName: string; quantity: number; revenue: number }>;
+}
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { token } = useAppSelector((state) => state.auth);
+  const toast = useToast();
+
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [branches, setBranches] = useState(0);
+
+  useEffect(() => {
+    if (token) {
+      fetchDashboardStats();
+      fetchBranches();
+    }
+  }, [token]);
+
+  const fetchDashboardStats = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/dashboard/stats`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data?.success) {
+        setStats(response.data.data);
+      } else {
+        // Initialize with zeros if no data
+        setStats({
+          todaySales: 0,
+          todayOrders: 0,
+          monthlySales: 0,
+          monthlyOrders: 0,
+          products: 0,
+          customers: 0,
+          suppliers: 0,
+          lowStock: 0,
+          expiredProducts: 0,
+          pendingOrders: 0,
+          revenueTrend: [],
+          topProducts: [],
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching dashboard stats:', error);
+      // Initialize with zeros on error
+      setStats({
+        todaySales: 0,
+        todayOrders: 0,
+        monthlySales: 0,
+        monthlyOrders: 0,
+        products: 0,
+        customers: 0,
+        suppliers: 0,
+        lowStock: 0,
+        expiredProducts: 0,
+        pendingOrders: 0,
+        revenueTrend: [],
+        topProducts: [],
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchBranches = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/branches`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setBranches(response.data?.data?.length || 0);
+    } catch (error) {
+      console.error('Error fetching branches:', error);
+      setBranches(0);
+    }
+  };
+
+  // Format revenue trend data for chart
+  const formatRevenueTrend = () => {
+    if (!stats?.revenueTrend || stats.revenueTrend.length === 0) {
+      return [];
+    }
+
+    return stats.revenueTrend.map((item) => ({
+      day: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
+      sales: parseFloat(item.revenue.toString()),
+      orders: parseInt(item.orders.toString()),
+    }));
+  };
+
+  // Calculate yesterday's sales for comparison
+  const calculateYesterdayComparison = () => {
+    const trend = stats?.revenueTrend || [];
+    if (trend.length < 2) return 0;
+
+    const today = parseFloat(trend[trend.length - 1]?.revenue?.toString() || '0');
+    const yesterday = parseFloat(trend[trend.length - 2]?.revenue?.toString() || '0');
+
+    if (yesterday === 0) return 0;
+    return ((today - yesterday) / yesterday) * 100;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+          <p className="mt-4 text-muted-foreground">Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Failed to load dashboard data</p>
+          <button
+            onClick={fetchDashboardStats}
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const revenueTrendData = formatRevenueTrend();
+  const yesterdayChange = calculateYesterdayComparison();
 
   return (
     <div className="space-y-6">
@@ -96,29 +199,27 @@ export const DashboardPage: React.FC = () => {
         <div onClick={() => navigate('/sales')} className="cursor-pointer">
           <StatCard
             title="Today's Sales"
-            value={formatCurrency(389000)}
+            value={formatCurrency(stats.todaySales)}
             icon={DollarSign}
             iconColor="text-green-600"
             iconBgColor="bg-green-100 dark:bg-green-900/20"
-            change={12.5}
+            change={yesterdayChange}
             changeLabel="from yesterday"
           />
         </div>
         <div onClick={() => navigate('/reports')} className="cursor-pointer">
           <StatCard
             title="Monthly Revenue"
-            value={formatCurrency(8400000)}
+            value={formatCurrency(stats.monthlySales)}
             icon={TrendingUp}
             iconColor="text-blue-600"
             iconBgColor="bg-blue-100 dark:bg-blue-900/20"
-            change={8.3}
-            changeLabel="from last month"
           />
         </div>
         <div onClick={() => navigate('/products')} className="cursor-pointer">
           <StatCard
             title="Products"
-            value="1,234"
+            value={stats.products.toString()}
             icon={Package}
             iconColor="text-purple-600"
             iconBgColor="bg-purple-100 dark:bg-purple-900/20"
@@ -127,12 +228,10 @@ export const DashboardPage: React.FC = () => {
         <div onClick={() => navigate('/inventory')} className="cursor-pointer">
           <StatCard
             title="Low Stock Items"
-            value="23"
+            value={stats.lowStock.toString()}
             icon={AlertTriangle}
             iconColor="text-orange-600"
             iconBgColor="bg-orange-100 dark:bg-orange-900/20"
-            change={-5}
-            changeLabel="from last week"
           />
         </div>
       </div>
@@ -142,7 +241,7 @@ export const DashboardPage: React.FC = () => {
         <div onClick={() => navigate('/customers')} className="cursor-pointer">
           <StatCard
             title="Customers"
-            value="2,458"
+            value={stats.customers.toString()}
             icon={Users}
             iconColor="text-cyan-600"
             iconBgColor="bg-cyan-100 dark:bg-cyan-900/20"
@@ -151,7 +250,7 @@ export const DashboardPage: React.FC = () => {
         <div onClick={() => navigate('/suppliers')} className="cursor-pointer">
           <StatCard
             title="Suppliers"
-            value="127"
+            value={stats.suppliers.toString()}
             icon={Truck}
             iconColor="text-indigo-600"
             iconBgColor="bg-indigo-100 dark:bg-indigo-900/20"
@@ -160,7 +259,7 @@ export const DashboardPage: React.FC = () => {
         <div onClick={() => navigate('/branches')} className="cursor-pointer">
           <StatCard
             title="Branches"
-            value="4"
+            value={branches.toString()}
             icon={Building2}
             iconColor="text-pink-600"
             iconBgColor="bg-pink-100 dark:bg-pink-900/20"
@@ -169,7 +268,7 @@ export const DashboardPage: React.FC = () => {
         <div onClick={() => navigate('/inventory')} className="cursor-pointer">
           <StatCard
             title="Expired Products"
-            value="8"
+            value={stats.expiredProducts.toString()}
             icon={Calendar}
             iconColor="text-red-600"
             iconBgColor="bg-red-100 dark:bg-red-900/20"
@@ -177,161 +276,192 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Charts Row 1 */}
+      {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Daily Sales Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Daily Sales This Week</CardTitle>
+            <CardTitle>Sales Trend (Last 7 Days)</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={dailySalesData}>
-                <defs>
-                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="day" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="sales"
-                  stroke="#2563eb"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorSales)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {revenueTrendData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={revenueTrendData}>
+                  <defs>
+                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="day" stroke="#64748b" fontSize={12} />
+                  <YAxis stroke="#64748b" fontSize={12} />
+                  <Tooltip
+                    formatter={(value: number) => formatCurrency(value)}
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="sales"
+                    stroke="#2563eb"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorSales)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <BarChart className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                  <p>No sales data available yet</p>
+                  <p className="text-sm mt-2">Start making sales to see your trend</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Monthly Revenue vs Expenses */}
+        {/* Orders Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Revenue vs Expenses (6 Months)</CardTitle>
+            <CardTitle>Orders Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlySalesData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
-                <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Legend />
-                <Bar dataKey="revenue" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expenses" fill="#dc2626" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {revenueTrendData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={revenueTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="day" stroke="#64748b" fontSize={12} />
+                  <YAxis stroke="#64748b" fontSize={12} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Bar dataKey="orders" fill="#16a34a" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <Package className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                  <p>No order data available yet</p>
+                  <p className="text-sm mt-2">Process orders to see statistics</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Row 2 */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Top Selling Products */}
+      {/* Summary Stats */}
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Top Selling Products</CardTitle>
+            <CardTitle>Today's Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={topProducts} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis type="number" stroke="#64748b" fontSize={12} />
-                <YAxis dataKey="name" type="category" stroke="#64748b" fontSize={12} width={100} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Bar dataKey="sales" fill="#16a34a" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/50">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Sales</p>
+                  <p className="text-2xl font-bold">{formatCurrency(stats.todaySales)}</p>
+                </div>
+                <DollarSign className="h-10 w-10 text-green-600 opacity-50" />
+              </div>
+              <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/50">
+                <div>
+                  <p className="text-sm text-muted-foreground">Orders Completed</p>
+                  <p className="text-2xl font-bold">{stats.todayOrders}</p>
+                </div>
+                <Package className="h-10 w-10 text-blue-600 opacity-50" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Category Performance */}
         <Card>
           <CardHeader>
-            <CardTitle>Sales by Category</CardTitle>
+            <CardTitle>Monthly Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/50">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Revenue</p>
+                  <p className="text-2xl font-bold">{formatCurrency(stats.monthlySales)}</p>
+                </div>
+                <TrendingUp className="h-10 w-10 text-primary opacity-50" />
+              </div>
+              <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/50">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Orders</p>
+                  <p className="text-2xl font-bold">{stats.monthlyOrders}</p>
+                </div>
+                <Package className="h-10 w-10 text-purple-600 opacity-50" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Activities */}
+      {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activities</CardTitle>
+          <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {recentActivities.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-4">
-                <Badge
-                  variant={
-                    activity.type === 'success'
-                      ? 'success'
-                      : activity.type === 'warning'
-                      ? 'warning'
-                      : activity.type === 'danger'
-                      ? 'danger'
-                      : 'info'
-                  }
-                  className="mt-0.5"
-                >
-                  {activity.type}
-                </Badge>
-                <div className="flex-1">
-                  <p className="font-medium">{activity.action}</p>
-                  <p className="text-sm text-muted-foreground">{activity.desc}</p>
-                </div>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {activity.time}
-                </span>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <button
+              onClick={() => navigate('/products')}
+              className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-accent transition"
+            >
+              <Package className="h-8 w-8 text-primary" />
+              <div className="text-left">
+                <p className="font-semibold">Manage Products</p>
+                <p className="text-sm text-muted-foreground">{stats.products} items</p>
               </div>
-            ))}
+            </button>
+
+            <button
+              onClick={() => navigate('/inventory')}
+              className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-accent transition"
+            >
+              <AlertTriangle className="h-8 w-8 text-orange-600" />
+              <div className="text-left">
+                <p className="font-semibold">Low Stock Alerts</p>
+                <p className="text-sm text-muted-foreground">{stats.lowStock} items</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/customers')}
+              className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-accent transition"
+            >
+              <Users className="h-8 w-8 text-cyan-600" />
+              <div className="text-left">
+                <p className="font-semibold">View Customers</p>
+                <p className="text-sm text-muted-foreground">{stats.customers} registered</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/reports')}
+              className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-accent transition"
+            >
+              <TrendingUp className="h-8 w-8 text-blue-600" />
+              <div className="text-left">
+                <p className="font-semibold">Generate Reports</p>
+                <p className="text-sm text-muted-foreground">View analytics</p>
+              </div>
+            </button>
           </div>
         </CardContent>
       </Card>
