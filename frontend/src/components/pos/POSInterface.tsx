@@ -121,11 +121,14 @@ export const POSInterface: React.FC = () => {
       });
       const branchesData = Array.isArray(response.data?.data) ? response.data.data : [];
       setBranches(branchesData);
-      if (branchesData.length > 0 && !selectedBranch) {
-        setSelectedBranch(branchesData[0].id);
+      // Auto-select first branch if none selected
+      if (branchesData.length > 0) {
+        setSelectedBranch(branchesData[0].id.toString());
       }
     } catch (error) {
       console.error('Error fetching branches:', error);
+      // Show user-friendly error
+      alert('Failed to load branches. Please refresh the page.');
     }
   };
 
@@ -251,7 +254,12 @@ export const POSInterface: React.FC = () => {
 
   const processPayment = async () => {
     if (!selectedBranch) {
-      alert('Please select a branch');
+      alert('Please select a branch before processing payment. If no branches are available, please contact your administrator.');
+      return;
+    }
+
+    if (cart.length === 0) {
+      alert('Please add items to cart before processing payment');
       return;
     }
 
@@ -752,10 +760,11 @@ export const POSInterface: React.FC = () => {
 
               <button
                 onClick={() => setShowPaymentModal(true)}
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg shadow-lg transition-all"
+                disabled={cart.length === 0 || !selectedBranch}
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed rounded-lg shadow-lg transition-all"
               >
                 <DollarSign className="w-5 h-5" />
-                Complete Payment
+                {!selectedBranch ? 'Select Branch First' : 'Complete Payment'}
               </button>
             </div>
           )}
