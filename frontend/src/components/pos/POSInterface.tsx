@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -18,8 +18,14 @@ import {
   Star,
   Grid3x3,
   List,
+  Printer,
+  Download,
+  Package,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { useAppSelector } from '@hooks/useAppSelector';
+import { printReceipt, downloadReceiptText } from '@utils/receipt';
+import axios from 'axios';
 
 interface CartItem {
   id: string;
@@ -39,10 +45,37 @@ interface Customer {
   loyaltyPoints: number;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image?: string;
+  barcode: string;
+  category?: string;
+  stock?: number;
+}
+
+interface Branch {
+  id: string;
+  name: string;
+  address?: string;
+  phone?: string;
+}
+
+interface SaleResponse {
+  id: string;
+  saleNumber: string;
+  total: number;
+  amountPaid: number;
+  change: number;
+  createdAt: string;
+}
+
 type PaymentMethod = 'cash' | 'card' | 'mpesa' | 'split';
 type ViewMode = 'grid' | 'list';
 
 export const POSInterface: React.FC = () => {
+  const { token, user } = useAppSelector((state) => state.auth);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,11 +83,53 @@ export const POSInterface: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showHoldModal, setShowHoldModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [cashReceived, setCashReceived] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [lastSale, setLastSale] = useState<SaleResponse | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>('');
   const barcodeInputRef = useRef<HTMLInputElement>(null);
 
-  // Mock data
+  // Fetch products and branches on mount
+  useEffect(() => {
+    if (token) {
+      fetchProducts();
+      fetchBranches();
+    }
+  }, [token]);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/products`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { limit: 100 }
+      });
+      const productsData = Array.isArray(response.data?.data) ? response.data.data : [];
+      setProducts(productsData);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
+  const fetchBranches = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/branches`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { limit: 100 }
+      });
+      const branchesData = Array.isArray(response.data?.data) ? response.data.data : [];
+      setBranches(branchesData);
+      if (branchesData.length > 0 && !selectedBranch) {
+        setSelectedBranch(branchesData[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching branches:', error);
+    }
+  };
+
+  // Mock data - filtered by real products when available
   const categories = [
     { id: 'all', name: 'All Products', icon: '🛒' },
     { id: 'fruits', name: 'Fruits', icon: '🍎' },
@@ -64,17 +139,34 @@ export const POSInterface: React.FC = () => {
     { id: 'beverages', name: 'Beverages', icon: '🥤' },
   ];
 
-  const recentProducts = [
-    { id: '1', name: 'Fresh Milk', price: 2.99, image: null, barcode: '123456' },
-    { id: '2', name: 'White Bread', price: 1.99, image: null, barcode: '123457' },
-    { id: '3', name: 'Apple', price: 0.99, image: null, barcode: '123458' },
-    { id: '4', name: 'Orange Juice', price: 3.49, image: null, barcode: '123459' },
-  ];
+  // Use real products if available, otherwise show recent/favorites from mock
+  const recentProducts = products.length > 0 
+    ? products.slice(0, 4).map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        image: p.image,
+        barcode: p.barcode || '000000'
+      }))
+    : [
+        { id: '1', name: 'Fresh Milk', price: 2.99, image: null, barcode: '123456' },
+        { id: '2', name: 'White Bread', price: 1.99, image: null, barcode: '123457' },
+        { id: '3', name: 'Apple', price: 0.99, image: null, barcode: '123458' },
+        { id: '4', name: 'Orange Juice', price: 3.49, image: null, barcode: '123459' },
+      ];
 
-  const favoriteProducts = [
-    { id: '5', name: 'Coca Cola', price: 1.49, image: null, barcode: '123460' },
-    { id: '6', name: 'Butter', price: 4.99, image: null, barcode: '123461' },
-  ];
+  const favoriteProducts = products.length > 0
+    ? products.slice(4, 6).map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        image: p.image,
+        barcode: p.barcode || '000000'
+      }))
+    : [
+        { id: '5', name: 'Coca Cola', price: 1.49, image: null, barcode: '123460' },
+        { id: '6', name: 'Butter', price: 4.99, image: null, barcode: '123461' },
+      ];
 
   const addToCart = (product: any) => {
     const existingItem = cart.find((item) => item.productId === product.id);
@@ -126,19 +218,6 @@ export const POSInterface: React.FC = () => {
     setCustomer(null);
   };
 
-  const holdTransaction = () => {
-    // Save transaction to hold list
-    const holdData = {
-      id: Date.now().toString(),
-      cart,
-      customer,
-      timestamp: new Date(),
-    };
-    localStorage.setItem(`hold_${holdData.id}`, JSON.stringify(holdData));
-    clearCart();
-    setShowHoldModal(false);
-  };
-
   const calculateSubtotal = () => {
     return cart.reduce((sum, item) => {
       const itemTotal = item.price * item.quantity;
@@ -160,19 +239,155 @@ export const POSInterface: React.FC = () => {
     return received - calculateTotal();
   };
 
-  const processPayment = () => {
-    // Process payment logic
-    console.log('Processing payment:', {
-      cart,
-      customer,
-      paymentMethod,
-      total: calculateTotal(),
-    });
+  const processPayment = async () => {
+    if (!selectedBranch) {
+      alert('Please select a branch');
+      return;
+    }
+
+    if (paymentMethod === 'cash') {
+      const received = parseFloat(cashReceived) || 0;
+      if (received < calculateTotal()) {
+        alert('Insufficient cash received');
+        return;
+      }
+    }
+
+    setProcessing(true);
+
+    try {
+      // Prepare sale data
+      const saleData = {
+        branchId: parseInt(selectedBranch),
+        customerId: customer ? parseInt(customer.id) : null,
+        items: cart.map(item => ({
+          productId: parseInt(item.productId),
+          quantity: item.quantity,
+          unitPrice: item.price,
+          discount: item.discount || 0,
+          tax: 16, // 16% tax rate
+        })),
+        payments: [{
+          method: paymentMethod,
+          amount: paymentMethod === 'cash' 
+            ? parseFloat(cashReceived) 
+            : calculateTotal(),
+          reference: paymentMethod === 'mpesa' ? `MPESA-${Date.now()}` : undefined,
+        }],
+        subtotal: calculateSubtotal(),
+        tax: calculateTax(),
+        discount: 0,
+        total: calculateTotal(),
+        amountPaid: paymentMethod === 'cash' 
+          ? parseFloat(cashReceived) 
+          : calculateTotal(),
+        changeAmount: calculateChange(),
+        notes: customer ? `Customer: ${customer.name}` : undefined,
+      };
+
+      // Create sale via API
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/pos/sales`,
+        saleData,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      const sale = response.data?.data;
+      
+      if (sale) {
+        setLastSale({
+          id: sale.id,
+          saleNumber: sale.saleNumber,
+          total: sale.total,
+          amountPaid: sale.amountPaid,
+          change: sale.changeAmount || 0,
+          createdAt: sale.createdAt,
+        });
+
+        // Show receipt modal
+        setShowPaymentModal(false);
+        setShowReceiptModal(true);
+      }
+    } catch (error: any) {
+      console.error('Payment processing error:', error);
+      const errorMessage = error.response?.data?.message || 'Payment failed. Please try again.';
+      alert(errorMessage);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handlePrintReceipt = () => {
+    if (!lastSale) return;
+
+    const branch = branches.find(b => b.id === selectedBranch);
     
-    // Print receipt
-    // Clear cart
+    printReceipt({
+      saleNumber: lastSale.saleNumber,
+      date: new Date(lastSale.createdAt),
+      cashier: user?.firstName || user?.email || 'Cashier',
+      customer: customer ? { name: customer.name, phone: customer.phone } : undefined,
+      items: cart.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        discount: item.discount,
+        total: item.price * item.quantity * (1 - (item.discount || 0) / 100),
+      })),
+      subtotal: calculateSubtotal(),
+      tax: calculateTax(),
+      discount: 0,
+      total: lastSale.total,
+      amountPaid: lastSale.amountPaid,
+      change: lastSale.change,
+      paymentMethod: paymentMethod,
+      branch: branch ? {
+        name: branch.name,
+        address: branch.address,
+        phone: branch.phone,
+      } : undefined,
+    });
+  };
+
+  const handleDownloadReceipt = () => {
+    if (!lastSale) return;
+
+    const branch = branches.find(b => b.id === selectedBranch);
+    
+    downloadReceiptText({
+      saleNumber: lastSale.saleNumber,
+      date: new Date(lastSale.createdAt),
+      cashier: user?.firstName || user?.email || 'Cashier',
+      customer: customer ? { name: customer.name, phone: customer.phone } : undefined,
+      items: cart.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        discount: item.discount,
+        total: item.price * item.quantity * (1 - (item.discount || 0) / 100),
+      })),
+      subtotal: calculateSubtotal(),
+      tax: calculateTax(),
+      discount: 0,
+      total: lastSale.total,
+      amountPaid: lastSale.amountPaid,
+      change: lastSale.change,
+      paymentMethod: paymentMethod,
+      branch: branch ? {
+        name: branch.name,
+        address: branch.address,
+        phone: branch.phone,
+      } : undefined,
+    });
+  };
+
+  const completeTransaction = () => {
     clearCart();
-    setShowPaymentModal(false);
+    setShowReceiptModal(false);
+    setLastSale(null);
+    setCashReceived('');
   };
 
   return (
@@ -187,6 +402,22 @@ export const POSInterface: React.FC = () => {
                 Point of Sale
               </h1>
             </div>
+            
+            {/* Branch Selector */}
+            {branches.length > 0 && (
+              <select
+                value={selectedBranch}
+                onChange={(e) => setSelectedBranch(e.target.value)}
+                className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {branches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            
             {customer && (
               <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <User className="w-4 h-4 text-blue-600" />
@@ -201,13 +432,6 @@ export const POSInterface: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowHoldModal(true)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-            >
-              <Clock className="w-4 h-4" />
-              Hold
-            </button>
             <button
               onClick={clearCart}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
@@ -595,10 +819,91 @@ export const POSInterface: React.FC = () => {
                 </button>
                 <button
                   onClick={processPayment}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-white bg-green-600 hover:bg-green-700 rounded-lg font-medium transition-colors"
+                  disabled={processing || (paymentMethod === 'cash' && parseFloat(cashReceived) < calculateTotal())}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
                 >
-                  <Check className="w-5 h-5" />
-                  Complete
+                  {processing ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5" />
+                      Complete
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Receipt Modal */}
+      {showReceiptModal && lastSale && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md"
+          >
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  Payment Successful!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Receipt #{lastSale.saleNumber}
+                </p>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-6 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">Total Amount</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    ${lastSale.total.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">Amount Paid</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    ${lastSale.amountPaid.toFixed(2)}
+                  </span>
+                </div>
+                {lastSale.change > 0 && (
+                  <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <span className="text-green-600 dark:text-green-400">Change</span>
+                    <span className="text-green-600 dark:text-green-400">
+                      ${lastSale.change.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={handlePrintReceipt}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  <Printer className="w-5 h-5" />
+                  Print Receipt
+                </button>
+                <button
+                  onClick={handleDownloadReceipt}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors"
+                >
+                  <Download className="w-5 h-5" />
+                  Download Receipt
+                </button>
+                <button
+                  onClick={completeTransaction}
+                  className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  Complete & New Sale
                 </button>
               </div>
             </div>
