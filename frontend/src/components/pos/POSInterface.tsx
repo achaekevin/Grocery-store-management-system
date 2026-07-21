@@ -115,20 +115,27 @@ export const POSInterface: React.FC = () => {
 
   const fetchBranches = async () => {
     try {
+      console.log('Fetching branches from API...');
       const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/branches`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { limit: 100 }
       });
+      console.log('Branches API response:', response.data);
       const branchesData = Array.isArray(response.data?.data) ? response.data.data : [];
+      console.log('Parsed branches:', branchesData);
       setBranches(branchesData);
       // Auto-select first branch if none selected
       if (branchesData.length > 0) {
         setSelectedBranch(branchesData[0].id.toString());
+        console.log('Auto-selected branch:', branchesData[0]);
+      } else {
+        console.warn('No branches returned from API');
       }
     } catch (error) {
       console.error('Error fetching branches:', error);
+      console.error('Error details:', error.response?.data);
       // Show user-friendly error
-      alert('Failed to load branches. Please refresh the page.');
+      alert('Failed to load branches. Please check console for details or contact administrator.');
     }
   };
 
