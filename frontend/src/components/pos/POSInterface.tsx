@@ -140,6 +140,16 @@ export const POSInterface: React.FC = () => {
   ];
 
   // Use real products if available, otherwise show recent/favorites from mock
+  const displayProducts = products.length > 0 ? products : [];
+  
+  const filteredProducts = displayProducts.filter((product) => {
+    const matchesSearch = searchQuery === '' || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.barcode && product.barcode.includes(searchQuery));
+    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   const recentProducts = products.length > 0 
     ? products.slice(0, 4).map(p => ({
         id: p.id,
@@ -512,61 +522,106 @@ export const POSInterface: React.FC = () => {
 
           {/* Products Grid */}
           <div className="flex-1 overflow-y-auto px-4 pb-4">
-            {/* Favorites */}
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                Favorites
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                {favoriteProducts.map((product) => (
-                  <motion.button
-                    key={product.id}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => addToCart(product)}
-                    className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-900/10 rounded-lg p-4 border-2 border-yellow-200 dark:border-yellow-800 hover:border-yellow-400 dark:hover:border-yellow-600 transition-all"
-                  >
-                    <div className="aspect-square bg-white dark:bg-gray-800 rounded-lg mb-2 flex items-center justify-center">
-                      <Package className="w-12 h-12 text-gray-400" />
-                    </div>
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      {product.name}
-                    </h4>
-                    <p className="text-lg font-bold text-yellow-700 dark:text-yellow-400 mt-1">
-                      ${product.price.toFixed(2)}
-                    </p>
-                  </motion.button>
-                ))}
+            {/* All Products - Searchable */}
+            {(searchQuery || selectedCategory !== 'all') && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  {searchQuery ? `Search Results (${filteredProducts.length})` : 'All Products'}
+                </h3>
+                {filteredProducts.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>No products found</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                    {filteredProducts.map((product) => (
+                      <motion.button
+                        key={product.id}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => addToCart(product)}
+                        className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md transition-all"
+                      >
+                        <div className="aspect-square bg-gray-50 dark:bg-gray-900 rounded-lg mb-2 flex items-center justify-center">
+                          <Package className="w-12 h-12 text-gray-400" />
+                        </div>
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {product.name}
+                        </h4>
+                        <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1">
+                          ${product.price.toFixed(2)}
+                        </p>
+                        {product.stock && product.stock < 10 && (
+                          <p className="text-xs text-orange-600 mt-1">
+                            Only {product.stock} left
+                          </p>
+                        )}
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
+            )}
+
+            {/* Favorites */}
+            {!searchQuery && selectedCategory === 'all' && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                  Favorites
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  {favoriteProducts.map((product) => (
+                    <motion.button
+                      key={product.id}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => addToCart(product)}
+                      className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-900/10 rounded-lg p-4 border-2 border-yellow-200 dark:border-yellow-800 hover:border-yellow-400 dark:hover:border-yellow-600 transition-all"
+                    >
+                      <div className="aspect-square bg-white dark:bg-gray-800 rounded-lg mb-2 flex items-center justify-center">
+                        <Package className="w-12 h-12 text-gray-400" />
+                      </div>
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {product.name}
+                      </h4>
+                      <p className="text-lg font-bold text-yellow-700 dark:text-yellow-400 mt-1">
+                        ${product.price.toFixed(2)}
+                      </p>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Recent Products */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Recently Sold
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                {recentProducts.map((product) => (
-                  <motion.button
-                    key={product.id}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => addToCart(product)}
-                    className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md transition-all"
-                  >
-                    <div className="aspect-square bg-gray-50 dark:bg-gray-900 rounded-lg mb-2 flex items-center justify-center">
-                      <Package className="w-12 h-12 text-gray-400" />
-                    </div>
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      {product.name}
-                    </h4>
-                    <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1">
-                      ${product.price.toFixed(2)}
-                    </p>
-                  </motion.button>
-                ))}
+            {!searchQuery && selectedCategory === 'all' && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Recently Sold
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  {recentProducts.map((product) => (
+                    <motion.button
+                      key={product.id}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => addToCart(product)}
+                      className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:shadow-md transition-all"
+                    >
+                      <div className="aspect-square bg-gray-50 dark:bg-gray-900 rounded-lg mb-2 flex items-center justify-center">
+                        <Package className="w-12 h-12 text-gray-400" />
+                      </div>
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {product.name}
+                      </h4>
+                      <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1">
+                        ${product.price.toFixed(2)}
+                      </p>
+                    </motion.button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
