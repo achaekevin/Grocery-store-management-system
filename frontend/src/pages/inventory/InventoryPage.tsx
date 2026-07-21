@@ -343,7 +343,7 @@ export const InventoryPage: React.FC = () => {
           />
         </div>
         <Button
-          variant={filterLowStock ? 'default' : 'outline'}
+          variant={filterLowStock ? 'primary' : 'outline'}
           onClick={() => setFilterLowStock(!filterLowStock)}
         >
           <AlertTriangle className="h-4 w-4 mr-2" />
