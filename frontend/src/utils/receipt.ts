@@ -92,13 +92,13 @@ export const generateReceiptText = (data: ReceiptData): string => {
 
     // Quantity, price, total
     const qtyStr = item.quantity.toString();
-    const priceStr = `$${item.price.toFixed(2)}`;
-    const totalStr = `$${item.total.toFixed(2)}`;
+    const priceStr = `KES ${item.price.toFixed(2)}`;
+    const totalStr = `KES ${item.total.toFixed(2)}`;
     
     const detailLine = ' '.repeat(28) + 
       qtyStr.padStart(3) + ' '.repeat(2) +
-      priceStr.padStart(7) + ' '.repeat(2) +
-      totalStr.padStart(8);
+      priceStr.padStart(11) + ' '.repeat(2) +
+      totalStr.padStart(12);
     lines.push(detailLine);
 
     // Discount if applicable
@@ -110,23 +110,23 @@ export const generateReceiptText = (data: ReceiptData): string => {
   lines.push(dottedLine());
 
   // Totals
-  lines.push(rightAlign(`$${data.subtotal.toFixed(2)}`, 'Subtotal:'));
+  lines.push(rightAlign(`KES ${data.subtotal.toFixed(2)}`, 'Subtotal:'));
   
   if (data.discount > 0) {
-    lines.push(rightAlign(`-$${data.discount.toFixed(2)}`, 'Discount:'));
+    lines.push(rightAlign(`-KES ${data.discount.toFixed(2)}`, 'Discount:'));
   }
   
-  lines.push(rightAlign(`$${data.tax.toFixed(2)}`, 'Tax (16%):'));
+  lines.push(rightAlign(`KES ${data.tax.toFixed(2)}`, 'Tax (16%):'));
   lines.push(dottedLine());
-  lines.push(rightAlign(`$${data.total.toFixed(2)}`, 'TOTAL:'));
+  lines.push(rightAlign(`KES ${data.total.toFixed(2)}`, 'TOTAL:'));
   lines.push(line());
 
   // Payment info
   lines.push(rightAlign(data.paymentMethod.toUpperCase(), 'Payment Method:'));
-  lines.push(rightAlign(`$${data.amountPaid.toFixed(2)}`, 'Amount Paid:'));
+  lines.push(rightAlign(`KES ${data.amountPaid.toFixed(2)}`, 'Amount Paid:'));
   
   if (data.change > 0) {
-    lines.push(rightAlign(`$${data.change.toFixed(2)}`, 'Change:'));
+    lines.push(rightAlign(`KES ${data.change.toFixed(2)}`, 'Change:'));
   }
   
   lines.push(line());
@@ -149,8 +149,8 @@ export const generateReceiptHTML = (data: ReceiptData): string => {
     <tr>
       <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${item.price.toFixed(2)}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">$${item.total.toFixed(2)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">KES ${item.price.toFixed(2)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">KES ${item.total.toFixed(2)}</td>
     </tr>
     ${item.discount ? `<tr><td colspan="4" style="padding: 4px 8px; font-size: 12px; color: #f97316; border-bottom: 1px solid #eee;">Discount: ${item.discount}%</td></tr>` : ''}
   `).join('');
@@ -324,21 +324,21 @@ export const generateReceiptHTML = (data: ReceiptData): string => {
     <div class="totals">
       <div>
         <span>Subtotal:</span>
-        <span>$${data.subtotal.toFixed(2)}</span>
+        <span>KES ${data.subtotal.toFixed(2)}</span>
       </div>
       ${data.discount > 0 ? `
       <div style="color: #f97316;">
         <span>Discount:</span>
-        <span>-$${data.discount.toFixed(2)}</span>
+        <span>-KES ${data.discount.toFixed(2)}</span>
       </div>
       ` : ''}
       <div>
         <span>Tax (16%):</span>
-        <span>$${data.tax.toFixed(2)}</span>
+        <span>KES ${data.tax.toFixed(2)}</span>
       </div>
       <div class="total-line">
         <span>TOTAL:</span>
-        <span>$${data.total.toFixed(2)}</span>
+        <span>KES ${data.total.toFixed(2)}</span>
       </div>
     </div>
     
@@ -349,12 +349,12 @@ export const generateReceiptHTML = (data: ReceiptData): string => {
       </div>
       <div>
         <span><strong>Amount Paid:</strong></span>
-        <span>$${data.amountPaid.toFixed(2)}</span>
+        <span>KES ${data.amountPaid.toFixed(2)}</span>
       </div>
       ${data.change > 0 ? `
       <div style="font-size: 16px; font-weight: bold;">
         <span>Change:</span>
-        <span>$${data.change.toFixed(2)}</span>
+        <span>KES ${data.change.toFixed(2)}</span>
       </div>
       ` : ''}
     </div>

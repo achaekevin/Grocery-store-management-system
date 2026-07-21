@@ -581,7 +581,7 @@ export const POSInterface: React.FC = () => {
                           {product.name}
                         </h4>
                         <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1">
-                          ${product.price.toFixed(2)}
+                          KES {product.price.toFixed(2)}
                         </p>
                         {product.stock && product.stock < 10 && (
                           <p className="text-xs text-orange-600 mt-1">
@@ -617,7 +617,7 @@ export const POSInterface: React.FC = () => {
                         {product.name}
                       </h4>
                       <p className="text-lg font-bold text-yellow-700 dark:text-yellow-400 mt-1">
-                        ${product.price.toFixed(2)}
+                        KES {product.price.toFixed(2)}
                       </p>
                     </motion.button>
                   ))}
@@ -647,7 +647,7 @@ export const POSInterface: React.FC = () => {
                         {product.name}
                       </h4>
                       <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1">
-                        ${product.price.toFixed(2)}
+                        KES {product.price.toFixed(2)}
                       </p>
                     </motion.button>
                   ))}
@@ -707,7 +707,7 @@ export const POSInterface: React.FC = () => {
                       </div>
                       
                       <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mt-1">
-                        ${item.price.toFixed(2)}
+                        KES {item.price.toFixed(2)}
                       </p>
 
                       <div className="flex items-center gap-2 mt-2">
@@ -765,19 +765,19 @@ export const POSInterface: React.FC = () => {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    ${calculateSubtotal().toFixed(2)}
+                    KES {calculateSubtotal().toFixed(2)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Tax (16%)</span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    ${calculateTax().toFixed(2)}
+                    KES {calculateTax().toFixed(2)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
                   <span className="text-gray-900 dark:text-white">Total</span>
                   <span className="text-blue-600 dark:text-blue-400">
-                    ${calculateTotal().toFixed(2)}
+                    KES {calculateTotal().toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -879,7 +879,7 @@ export const POSInterface: React.FC = () => {
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600 dark:text-gray-400">Change</span>
                         <span className="text-lg font-bold text-green-600 dark:text-green-400">
-                          ${calculateChange().toFixed(2)}
+                          KES {calculateChange().toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -892,7 +892,7 @@ export const POSInterface: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Total Amount</span>
                   <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${calculateTotal().toFixed(2)}
+                    KES {calculateTotal().toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -953,20 +953,20 @@ export const POSInterface: React.FC = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Total Amount</span>
                   <span className="font-semibold text-gray-900 dark:text-white">
-                    ${lastSale.total.toFixed(2)}
+                    KES {lastSale.total.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Amount Paid</span>
                   <span className="font-semibold text-gray-900 dark:text-white">
-                    ${lastSale.amountPaid.toFixed(2)}
+                    KES {lastSale.amountPaid.toFixed(2)}
                   </span>
                 </div>
                 {lastSale.change > 0 && (
                   <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200 dark:border-gray-700">
                     <span className="text-green-600 dark:text-green-400">Change</span>
                     <span className="text-green-600 dark:text-green-400">
-                      ${lastSale.change.toFixed(2)}
+                      KES {lastSale.change.toFixed(2)}
                     </span>
                   </div>
                 )}
