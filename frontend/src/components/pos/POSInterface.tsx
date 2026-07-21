@@ -447,10 +447,16 @@ export const POSInterface: React.FC = () => {
                 </select>
               </div>
             ) : (
-              <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-600 rounded-lg">
+              <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-600 rounded-lg flex items-center gap-3">
                 <span className="text-sm font-medium text-red-700 dark:text-red-300">
-                  ⚠️ No branches available - Contact admin
+                  ⚠️ No branches available
                 </span>
+                <button
+                  onClick={() => window.location.href = '/branches'}
+                  className="px-3 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
+                >
+                  Create Branch
+                </button>
               </div>
             )}
             
