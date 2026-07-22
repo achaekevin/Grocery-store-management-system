@@ -53,6 +53,12 @@ export const login = async (req, res) => {
     return ApiResponse.success(res, 'Login successful', result);
   } catch (error) {
     logger.error('Login error:', error);
+    logger.error('Error details:', { 
+      message: error.message, 
+      stack: error.stack,
+      sql: error.sql,
+      original: error.original
+    });
 
     if (error instanceof ApiError) {
       return res.status(error.statusCode).json({

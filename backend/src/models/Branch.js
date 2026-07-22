@@ -27,12 +27,6 @@ class Branch extends Model {
       as: 'inventory',
     });
 
-    // Branch has many users
-    Branch.hasMany(models.User, {
-      foreignKey: 'branchId',
-      as: 'users',
-    });
-
     // Branch has one manager (User)
     Branch.belongsTo(models.User, {
       foreignKey: 'managerId',
