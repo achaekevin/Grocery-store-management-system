@@ -65,24 +65,18 @@ const startServer = async () => {
 
     // Start listening
     server.listen(config.port, () => {
-      logger.info(`
-╔═══════════════════════════════════════════════════════════╗
-║                                                           ║
-║   🚀 GroceryOS Backend API Server                        ║
-║                                                           ║
-║   Environment: ${config.env.padEnd(41)}║
-║   Port: ${config.port.toString().padEnd(49)}║
-║   API Version: ${config.apiVersion.padEnd(44)}║
-║                                                           ║
-║   🌐 Server: http://localhost:${config.port.toString().padEnd(29)}║
-║   📚 API Docs: http://localhost:${config.port}/api-docs${' '.repeat(14)}║
-║   ❤️  Health: http://localhost:${config.port}/health${' '.repeat(17)}║
-║                                                           ║
-║   Database: Connected ✓                                   ║
-║   Redis: ${(config.redis.host ? 'Connected ✓' : 'Not configured').padEnd(47)}║
-║                                                           ║
-╚═══════════════════════════════════════════════════════════╝
-      `);
+      logger.info('===============================================');
+      logger.info('  GroceryOS Backend API Server');
+      logger.info('===============================================');
+      logger.info(`  Environment: ${config.env}`);
+      logger.info(`  Port: ${config.port}`);
+      logger.info(`  API Version: ${config.apiVersion}`);
+      logger.info(`  Server: http://localhost:${config.port}`);
+      logger.info(`  API Docs: http://localhost:${config.port}/api-docs`);
+      logger.info(`  Health: http://localhost:${config.port}/health`);
+      logger.info(`  Database: Connected`);
+      logger.info(`  Redis: ${config.redis.host ? 'Connected' : 'Not configured'}`);
+      logger.info('===============================================');
     });
   } catch (error) {
     logger.error('Failed to start server:', error);

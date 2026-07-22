@@ -41,7 +41,7 @@ export const BranchesPage: React.FC = () => {
   const fetchBranches = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/branches`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/v1/branches`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { limit: 100 }
       });
@@ -71,13 +71,13 @@ export const BranchesPage: React.FC = () => {
     try {
       console.log('=== BRANCH SUBMISSION START ===');
       console.log('Form data:', formData);
-      console.log('API URL:', `${import.meta.env.VITE_API_BASE_URL}/branches`);
+      console.log('API URL:', `${import.meta.env.VITE_API_BASE_URL}/v1/branches`);
       console.log('Token:', token ? 'Present' : 'Missing');
       
       if (editingBranch) {
         console.log('Updating branch:', editingBranch.id);
         const response = await axios.put(
-          `${import.meta.env.VITE_API_BASE_URL}/branches/${editingBranch.id}`,
+          `${import.meta.env.VITE_API_BASE_URL}/v1/branches/${editingBranch.id}`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -86,7 +86,7 @@ export const BranchesPage: React.FC = () => {
       } else {
         console.log('Creating new branch...');
         const response = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/branches`,
+          `${import.meta.env.VITE_API_BASE_URL}/v1/branches`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -135,7 +135,7 @@ export const BranchesPage: React.FC = () => {
     
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_BASE_URL}/branches/${id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/v1/branches/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert('Branch deleted successfully');
