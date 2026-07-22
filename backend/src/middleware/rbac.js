@@ -47,7 +47,7 @@ export const requireRole = (...allowedRoles) => {
 /**
  * Check if user has required permission
  */
-export const requirePermission = (module, action) => {
+export const requirePermission = (permissionString) => {
   return (req, res, next) => {
     try {
       if (!req.user) {
@@ -62,13 +62,16 @@ export const requirePermission = (module, action) => {
       }
 
       const permissions = req.user.role?.permissions || [];
-      const permissionName = `${module}.${action}`;
+      
+      // Support both 'module:action' and 'module.action' formats
+      const normalizedPermission = permissionString.replace(':', '.');
 
       const hasPermission = permissions.some(
-        (p) => p.name === permissionName
+        (p) => p.name === normalizedPermission || p.name === permissionString
       );
 
       if (!hasPermission) {
+        const [module, action] = permissionString.split(/[:.]/);
         throw ApiError.forbidden(
           `You don't have permission to ${action} ${module}`
         );
@@ -94,29 +97,29 @@ export const requirePermission = (module, action) => {
 };
 
 /**
- * Check if user belongs to the same business (Multi-tenant isolation)
+ * Check if user belongs to the same tenant (Multi-tenant isolation)
  */
-export const requireSameBusiness = (req, res, next) => {
+export const requireSameTenant = (req, res, next) => {
   try {
     if (!req.user) {
       throw ApiError.unauthorized('Authentication required');
     }
 
-    const userBusinessId = req.user.businessId;
+    const userTenantId = req.user.tenantId;
 
     // Check in params
-    if (req.params.businessId && parseInt(req.params.businessId) !== userBusinessId) {
-      throw ApiError.forbidden('Access denied to this business');
+    if (req.params.tenantId && req.params.tenantId !== userTenantId) {
+      throw ApiError.forbidden('Access denied to this tenant');
     }
 
     // Check in body
-    if (req.body.businessId && parseInt(req.body.businessId) !== userBusinessId) {
-      throw ApiError.forbidden('Access denied to this business');
+    if (req.body.tenantId && req.body.tenantId !== userTenantId) {
+      throw ApiError.forbidden('Access denied to this tenant');
     }
 
     // Check in query
-    if (req.query.businessId && parseInt(req.query.businessId) !== userBusinessId) {
-      throw ApiError.forbidden('Access denied to this business');
+    if (req.query.tenantId && req.query.tenantId !== userTenantId) {
+      throw ApiError.forbidden('Access denied to this tenant');
     }
 
     next();
@@ -131,7 +134,7 @@ export const requireSameBusiness = (req, res, next) => {
 
     return res.status(500).json({
       success: false,
-      message: 'Business check failed',
+      message: 'Tenant check failed',
       errors: [error.message],
     });
   }
@@ -181,6 +184,6 @@ export const requireBranchAccess = (req, res, next) => {
 export default {
   requireRole,
   requirePermission,
-  requireSameBusiness,
+  requireSameTenant,
   requireBranchAccess,
 };

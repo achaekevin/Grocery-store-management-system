@@ -20,10 +20,15 @@ export const createBranch = async (branchData) => {
  * Get all branches
  */
 export const getBranches = async (filters, pagination) => {
-  const { search, status, city, sortBy = 'createdAt', sortOrder = 'desc' } = filters;
+  const { search, status, city, sortBy = 'createdAt', sortOrder = 'desc', tenantId } = filters;
   const { limit, offset } = pagination;
 
   const where = {};
+
+  // Filter by tenant (multi-tenant isolation)
+  if (tenantId) {
+    where.tenantId = tenantId;
+  }
 
   // Text search
   if (search) {
@@ -35,15 +40,15 @@ export const getBranches = async (filters, pagination) => {
   }
 
   // Filters
-  if (status) where.status = status;
+  if (status !== undefined) where.isActive = status === 'active';
   if (city) where.city = city;
 
   const { count, rows } = await db.Branch.findAndCountAll({
     where,
     include: [
       {
-        model: db.Business,
-        as: 'business',
+        model: db.Tenant,
+        as: 'tenant',
         attributes: ['id', 'name'],
       },
     ],
@@ -61,7 +66,7 @@ export const getBranches = async (filters, pagination) => {
 export const getBranchById = async (branchId) => {
   const branch = await db.Branch.findByPk(branchId, {
     include: [
-      { model: db.Business, as: 'business' },
+      { model: db.Tenant, as: 'tenant' },
       {
         model: db.User,
         as: 'users',

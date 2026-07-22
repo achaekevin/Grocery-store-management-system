@@ -45,10 +45,21 @@ export const BranchesPage: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
         params: { limit: 100 }
       });
-      setBranches(Array.isArray(response.data?.data) ? response.data.data : []);
-    } catch (error) {
+      
+      console.log('Branches response:', response.data);
+      
+      if (response.data?.success && response.data?.data) {
+        setBranches(Array.isArray(response.data.data) ? response.data.data : []);
+      } else {
+        setBranches([]);
+      }
+    } catch (error: any) {
       console.error('Error fetching branches:', error);
-      alert('Failed to load branches');
+      console.error('Error response:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.message || 'Failed to load branches';
+      alert(`Error: ${errorMessage}`);
+      setBranches([]);
     } finally {
       setLoading(false);
     }
@@ -58,19 +69,23 @@ export const BranchesPage: React.FC = () => {
     e.preventDefault();
     
     try {
+      console.log('Submitting branch data:', formData);
+      
       if (editingBranch) {
-        await axios.put(
+        const response = await axios.put(
           `${import.meta.env.VITE_API_BASE_URL}/branches/${editingBranch.id}`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        console.log('Update response:', response.data);
         alert('Branch updated successfully');
       } else {
-        await axios.post(
+        const response = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/branches`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        console.log('Create response:', response.data);
         alert('Branch created successfully');
       }
       
@@ -79,7 +94,12 @@ export const BranchesPage: React.FC = () => {
       fetchBranches();
     } catch (error: any) {
       console.error('Error saving branch:', error);
-      alert(error.response?.data?.message || 'Failed to save branch');
+      console.error('Error response:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.errors?.[0] || 
+                          'Failed to save branch';
+      alert(`Error: ${errorMessage}`);
     }
   };
 

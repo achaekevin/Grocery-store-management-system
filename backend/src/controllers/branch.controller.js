@@ -6,7 +6,7 @@ export const createBranch = async (req, res) => {
   try {
     const branchData = {
       ...req.body,
-      businessId: req.user.businessId,
+      tenantId: req.user.tenantId,
     };
 
     const branch = await branchService.createBranch(branchData);
@@ -20,8 +20,14 @@ export const createBranch = async (req, res) => {
 
 export const getBranches = async (req, res) => {
   try {
+    // Add tenantId filter for multi-tenant isolation
+    const filters = {
+      ...req.query,
+      tenantId: req.user.tenantId,
+    };
+
     const { count, branches } = await branchService.getBranches(
-      req.query,
+      filters,
       req.pagination
     );
 

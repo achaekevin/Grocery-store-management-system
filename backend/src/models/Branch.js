@@ -3,10 +3,10 @@ import sequelize from '../config/sequelize.js';
 
 class Branch extends Model {
   static associate(models) {
-    // Branch belongs to Business
-    Branch.belongsTo(models.Business, {
-      foreignKey: 'businessId',
-      as: 'business',
+    // Branch belongs to Tenant
+    Branch.belongsTo(models.Tenant, {
+      foreignKey: 'tenantId',
+      as: 'tenant',
     });
 
     // Branch has many products
@@ -21,6 +21,18 @@ class Branch extends Model {
       as: 'sales',
     });
 
+    // Branch has many inventory items
+    Branch.hasMany(models.Inventory, {
+      foreignKey: 'branchId',
+      as: 'inventory',
+    });
+
+    // Branch has many users
+    Branch.hasMany(models.User, {
+      foreignKey: 'branchId',
+      as: 'users',
+    });
+
     // Branch has one manager (User)
     Branch.belongsTo(models.User, {
       foreignKey: 'managerId',
@@ -32,16 +44,16 @@ class Branch extends Model {
 Branch.init(
     {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
-        autoIncrement: true,
       },
-      businessId: {
-        type: DataTypes.INTEGER,
+      tenantId: {
+        type: DataTypes.UUID,
         allowNull: false,
-        field: 'business_id',
+        field: 'tenant_id',
         references: {
-          model: 'businesses',
+          model: 'tenants',
           key: 'id',
         },
       },
@@ -54,12 +66,11 @@ Branch.init(
       },
       code: {
         type: DataTypes.STRING(50),
-        allowNull: true,
-        unique: true,
+        allowNull: false,
       },
       phone: {
         type: DataTypes.STRING(20),
-        allowNull: false,
+        allowNull: true,
       },
       email: {
         type: DataTypes.STRING(255),
@@ -70,13 +81,13 @@ Branch.init(
       },
       address: {
         type: DataTypes.TEXT,
-        allowNull: false,
+        allowNull: true,
       },
       city: {
         type: DataTypes.STRING(100),
-        allowNull: false,
+        allowNull: true,
       },
-      region: {
+      state: {
         type: DataTypes.STRING(100),
         allowNull: true,
       },
@@ -86,7 +97,7 @@ Branch.init(
         field: 'postal_code',
       },
       managerId: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: true,
         field: 'manager_id',
         references: {
@@ -94,9 +105,32 @@ Branch.init(
           key: 'id',
         },
       },
-      status: {
-        type: DataTypes.ENUM('active', 'inactive'),
-        defaultValue: 'active',
+      latitude: {
+        type: DataTypes.DECIMAL(10, 8),
+        allowNull: true,
+      },
+      longitude: {
+        type: DataTypes.DECIMAL(11, 8),
+        allowNull: true,
+      },
+      openingTime: {
+        type: DataTypes.TIME,
+        allowNull: true,
+        field: 'opening_time',
+      },
+      closingTime: {
+        type: DataTypes.TIME,
+        allowNull: true,
+        field: 'closing_time',
+      },
+      isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+        field: 'is_active',
+      },
+      settings: {
+        type: DataTypes.JSON,
+        defaultValue: {},
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -123,17 +157,14 @@ Branch.init(
       underscored: true,
       indexes: [
         {
-          fields: ['business_id'],
-        },
-        {
-          fields: ['status'],
+          unique: true,
+          fields: ['tenant_id', 'code'],
         },
         {
           fields: ['manager_id'],
         },
         {
-          unique: true,
-          fields: ['code'],
+          fields: ['is_active'],
         },
       ],
     }
