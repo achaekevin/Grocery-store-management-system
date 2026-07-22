@@ -12,9 +12,10 @@ export const createBranch = async (req, res) => {
     const branch = await branchService.createBranch(branchData);
 
     logger.info(`Branch created: ${branch.id} by user ${req.user.id}`);
-    res.status(201).json(ApiResponse.created('Branch created successfully', branch));
+    return ApiResponse.created(res, 'Branch created successfully', branch);
   } catch (error) {
-    throw error;
+    logger.error('Create branch error:', error);
+    return ApiResponse.internal(res, 'Failed to create branch', [error.message]);
   }
 };
 
@@ -34,25 +35,25 @@ export const getBranches = async (req, res) => {
     const { page, limit } = req.pagination;
     const totalPages = Math.ceil(count / limit);
 
-    res.json(
-      ApiResponse.paginated('Branches retrieved successfully', branches, {
-        currentPage: page,
-        perPage: limit,
-        totalItems: count,
-        totalPages,
-      })
-    );
+    return ApiResponse.paginated(res, 'Branches retrieved successfully', branches, {
+      currentPage: page,
+      perPage: limit,
+      totalItems: count,
+      totalPages,
+    });
   } catch (error) {
-    throw error;
+    logger.error('Get branches error:', error);
+    return ApiResponse.internal(res, 'Failed to retrieve branches', [error.message]);
   }
 };
 
 export const getBranch = async (req, res) => {
   try {
     const branch = await branchService.getBranchById(req.params.id);
-    res.json(ApiResponse.success('Branch retrieved successfully', branch));
+    return ApiResponse.success(res, 'Branch retrieved successfully', branch);
   } catch (error) {
-    throw error;
+    logger.error('Get branch error:', error);
+    return ApiResponse.internal(res, 'Failed to retrieve branch', [error.message]);
   }
 };
 
@@ -61,9 +62,10 @@ export const updateBranch = async (req, res) => {
     const branch = await branchService.updateBranch(req.params.id, req.body);
 
     logger.info(`Branch updated: ${req.params.id} by user ${req.user.id}`);
-    res.json(ApiResponse.success('Branch updated successfully', branch));
+    return ApiResponse.success(res, 'Branch updated successfully', branch);
   } catch (error) {
-    throw error;
+    logger.error('Update branch error:', error);
+    return ApiResponse.internal(res, 'Failed to update branch', [error.message]);
   }
 };
 
@@ -72,9 +74,10 @@ export const deleteBranch = async (req, res) => {
     await branchService.deleteBranch(req.params.id);
 
     logger.info(`Branch deleted: ${req.params.id} by user ${req.user.id}`);
-    res.json(ApiResponse.success('Branch deleted successfully'));
+    return ApiResponse.success(res, 'Branch deleted successfully');
   } catch (error) {
-    throw error;
+    logger.error('Delete branch error:', error);
+    return ApiResponse.internal(res, 'Failed to delete branch', [error.message]);
   }
 };
 
@@ -87,9 +90,10 @@ export const getBranchStatistics = async (req, res) => {
       dateTo
     );
 
-    res.json(ApiResponse.success('Branch statistics retrieved', stats));
+    return ApiResponse.success(res, 'Branch statistics retrieved', stats);
   } catch (error) {
-    throw error;
+    logger.error('Get branch statistics error:', error);
+    return ApiResponse.internal(res, 'Failed to retrieve branch statistics', [error.message]);
   }
 };
 

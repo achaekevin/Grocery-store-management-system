@@ -69,9 +69,13 @@ export const BranchesPage: React.FC = () => {
     e.preventDefault();
     
     try {
-      console.log('Submitting branch data:', formData);
+      console.log('=== BRANCH SUBMISSION START ===');
+      console.log('Form data:', formData);
+      console.log('API URL:', `${import.meta.env.VITE_API_BASE_URL}/branches`);
+      console.log('Token:', token ? 'Present' : 'Missing');
       
       if (editingBranch) {
+        console.log('Updating branch:', editingBranch.id);
         const response = await axios.put(
           `${import.meta.env.VITE_API_BASE_URL}/branches/${editingBranch.id}`,
           formData,
@@ -80,6 +84,7 @@ export const BranchesPage: React.FC = () => {
         console.log('Update response:', response.data);
         alert('Branch updated successfully');
       } else {
+        console.log('Creating new branch...');
         const response = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/branches`,
           formData,
@@ -89,16 +94,25 @@ export const BranchesPage: React.FC = () => {
         alert('Branch created successfully');
       }
       
+      console.log('=== BRANCH SUBMISSION SUCCESS ===');
       setShowModal(false);
       resetForm();
       fetchBranches();
     } catch (error: any) {
-      console.error('Error saving branch:', error);
-      console.error('Error response:', error.response?.data);
+      console.error('=== BRANCH SUBMISSION ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error response:', error.response);
+      console.error('Error response data:', error.response?.data);
+      console.error('Error message:', error.message);
+      console.error('Error config:', error.config);
       
       const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.errors?.[0]?.message ||
                           error.response?.data?.errors?.[0] || 
+                          error.message ||
                           'Failed to save branch';
+      
+      console.error('Final error message:', errorMessage);
       alert(`Error: ${errorMessage}`);
     }
   };
