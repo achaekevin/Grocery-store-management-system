@@ -242,7 +242,7 @@ export const BranchesPage: React.FC = () => {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-200">
                     Branch Name <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -254,7 +254,7 @@ export const BranchesPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-200">
                     Branch Code <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -266,7 +266,7 @@ export const BranchesPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Phone</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-200">Phone</label>
                   <Input
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -275,7 +275,7 @@ export const BranchesPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-200">Email</label>
                   <Input
                     type="email"
                     value={formData.email}
@@ -285,7 +285,7 @@ export const BranchesPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">City</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-200">City</label>
                   <Input
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
@@ -294,13 +294,13 @@ export const BranchesPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Address</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-gray-200">Address</label>
                   <textarea
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     placeholder="Street address"
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
                 </div>
 
