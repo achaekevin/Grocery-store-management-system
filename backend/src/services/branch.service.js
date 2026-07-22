@@ -47,7 +47,7 @@ export const getBranches = async (filters, pagination) => {
     where,
     include: [
       {
-        model: db.Tenant,
+        model: db.Business,
         as: 'tenant',
         attributes: ['id', 'name'],
       },
@@ -66,7 +66,7 @@ export const getBranches = async (filters, pagination) => {
 export const getBranchById = async (branchId) => {
   const branch = await db.Branch.findByPk(branchId, {
     include: [
-      { model: db.Tenant, as: 'tenant' },
+      { model: db.Business, as: 'tenant' },
       {
         model: db.User,
         as: 'users',

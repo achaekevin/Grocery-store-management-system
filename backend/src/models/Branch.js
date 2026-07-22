@@ -3,8 +3,8 @@ import sequelize from '../config/sequelize.js';
 
 class Branch extends Model {
   static associate(models) {
-    // Branch belongs to Tenant
-    Branch.belongsTo(models.Tenant, {
+    // Branch belongs to Business (tenant)
+    Branch.belongsTo(models.Business, {
       foreignKey: 'tenantId',
       as: 'tenant',
     });
