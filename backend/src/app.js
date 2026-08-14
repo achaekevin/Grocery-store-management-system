@@ -53,12 +53,38 @@ app.use(validateHeaders);
 // Check payload size before parsing
 app.use(checkPayloadSize(10 * 1024 * 1024)); // 10MB limit
 
-// CORS with strict configuration
+// Dynamic CORS configuration supporting local network (LAN) access
+const getCorsOrigin = () => {
+  const allowed = config.cors.origin;
+  if (!allowed || allowed === '*') {
+    return true; // Allow all origins if '*' or not restricted
+  }
+  
+  const originsList = typeof allowed === 'string' 
+    ? allowed.split(',').map(o => o.trim()) 
+    : Array.isArray(allowed) ? allowed : [allowed];
+
+  return (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+    if (!origin) return callback(null, true);
+    if (originsList.includes('*') || originsList.includes(origin)) {
+      return callback(null, true);
+    }
+    // Allow local network IP ranges (192.168.x.x, 10.x.x.x, 172.16-31.x.x) and localhost
+    const isLocalNetwork = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(origin);
+    if (isLocalNetwork) {
+      return callback(null, true);
+    }
+    logger.warn(`CORS blocked request from origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
+  };
+};
+
 app.use(
   cors({
-    origin: config.cors.origin,
+    origin: getCorsOrigin(),
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'],
     maxAge: 600, // 10 minutes
@@ -124,7 +150,8 @@ app.get('/', (req, res) => {
   });
 });
 
-// Mount API routes
+// Mount API routes (support both /api and /api/v1)
+app.use('/api', routes);
 app.use(`/api/${config.apiVersion}`, routes);
 
 // Swagger documentation

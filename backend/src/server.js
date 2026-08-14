@@ -2,16 +2,31 @@ import app, { initializeDatabase, initializeRedis, gracefulShutdown } from './ap
 import config from './config/index.js';
 import logger from './config/logger.js';
 import http from 'http';
+import os from 'os';
 import { Server as SocketIOServer } from 'socket.io';
 import db from './models/index.js';
+
+// Helper to get local IPv4 addresses
+const getNetworkAddresses = () => {
+  const interfaces = os.networkInterfaces();
+  const addresses = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const net of interfaces[name]) {
+      if (net.family === 'IPv4' && !net.internal) {
+        addresses.push(net.address);
+      }
+    }
+  }
+  return addresses;
+};
 
 // Create HTTP server
 const server = http.createServer(app);
 
-// Initialize Socket.IO
+// Initialize Socket.IO with CORS for network access
 const io = new SocketIOServer(server, {
   cors: {
-    origin: config.cors.origin,
+    origin: config.cors.origin === '*' ? true : (config.cors.origin || true),
     credentials: true,
   },
 });
@@ -63,19 +78,25 @@ const startServer = async () => {
       logger.warn('Continuing without Redis cache');
     }
 
-    // Start listening
-    server.listen(config.port, () => {
+    // Start listening on configured host (0.0.0.0 for LAN access)
+    server.listen(config.port, config.host, () => {
+      const networkIPs = getNetworkAddresses();
       logger.info('===============================================');
       logger.info('  GroceryOS Backend API Server');
       logger.info('===============================================');
       logger.info(`  Environment: ${config.env}`);
-      logger.info(`  Port: ${config.port}`);
+      logger.info(`  Host:        ${config.host}`);
+      logger.info(`  Port:        ${config.port}`);
       logger.info(`  API Version: ${config.apiVersion}`);
-      logger.info(`  Server: http://localhost:${config.port}`);
-      logger.info(`  API Docs: http://localhost:${config.port}/api-docs`);
-      logger.info(`  Health: http://localhost:${config.port}/health`);
-      logger.info(`  Database: Connected`);
-      logger.info(`  Redis: ${config.redis.host ? 'Connected' : 'Not configured'}`);
+      logger.info(`  Local URL:   http://localhost:${config.port}`);
+      if (networkIPs.length > 0) {
+        networkIPs.forEach((ip) => {
+          logger.info(`  Network URL: http://${ip}:${config.port}`);
+        });
+      }
+      logger.info(`  Health Check: http://localhost:${config.port}/health`);
+      logger.info(`  Database:    Connected`);
+      logger.info(`  Redis:       ${config.redis.host ? 'Connected' : 'Not configured'}`);
       logger.info('===============================================');
     });
   } catch (error) {

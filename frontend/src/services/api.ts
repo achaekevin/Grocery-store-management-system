@@ -1,13 +1,25 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+export const getApiBaseUrl = (): string => {
+  let envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (!envUrl) {
+    return '/api';
+  }
+  // If accessing from a network client and envUrl uses localhost, replace with actual host IP/name
+  if (typeof window !== 'undefined' && envUrl.includes('localhost') && window.location.hostname !== 'localhost') {
+    return envUrl.replace('localhost', window.location.hostname);
+  }
+  return envUrl;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiService {
   private axiosInstance: AxiosInstance;
 
   constructor() {
     this.axiosInstance = axios.create({
-      baseURL: API_BASE_URL,
+      baseURL: getApiBaseUrl(),
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',

@@ -4,6 +4,7 @@ dotenv.config();
 
 export default {
   env: process.env.NODE_ENV || 'development',
+  host: process.env.HOST || '0.0.0.0',
   port: process.env.PORT || 5000,
   apiVersion: process.env.API_VERSION || 'v1',
   appName: process.env.APP_NAME || 'GroceryOS',
@@ -67,7 +68,7 @@ export default {
   },
   
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN || '*',
   },
   
   logging: {

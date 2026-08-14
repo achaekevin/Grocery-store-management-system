@@ -36,10 +36,6 @@ export const authenticate = async (req, res, next) => {
           model: db.Business,
           as: 'business',
         },
-        {
-          model: db.Branch,
-          as: 'branch',
-        },
       ],
     });
 
@@ -47,7 +43,7 @@ export const authenticate = async (req, res, next) => {
       throw ApiError.unauthorized('User not found');
     }
 
-    if (user.status !== 'active') {
+    if (user.isActive === false || (user.status && user.status !== 'active')) {
       throw ApiError.unauthorized('User account is not active');
     }
 
@@ -66,7 +62,6 @@ export const authenticate = async (req, res, next) => {
     req.user = user.toSafeObject();
     req.user.role = user.role;
     req.user.business = user.business;
-    req.user.branch = user.branch;
 
     next();
   } catch (error) {

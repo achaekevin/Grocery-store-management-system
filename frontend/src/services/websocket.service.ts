@@ -33,7 +33,10 @@ class WebSocketService {
     }
 
     this.isConnecting = true;
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
+    let wsUrl = import.meta.env.VITE_WS_URL || `ws://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:5000`;
+    if (typeof window !== 'undefined' && wsUrl.includes('localhost') && window.location.hostname !== 'localhost') {
+      wsUrl = wsUrl.replace('localhost', window.location.hostname);
+    }
     const token = localStorage.getItem('token');
 
     try {

@@ -4,8 +4,15 @@ import logger from '../config/logger.js';
 
 export const createBranch = async (req, res) => {
   try {
+    const cleanedBody = { ...req.body };
+    ['phone', 'email', 'address', 'city', 'region', 'postalCode'].forEach((field) => {
+      if (cleanedBody[field] === '') {
+        cleanedBody[field] = null;
+      }
+    });
+
     const branchData = {
-      ...req.body,
+      ...cleanedBody,
       tenantId: req.user.tenantId,
     };
 
@@ -59,7 +66,14 @@ export const getBranch = async (req, res) => {
 
 export const updateBranch = async (req, res) => {
   try {
-    const branch = await branchService.updateBranch(req.params.id, req.body);
+    const cleanedBody = { ...req.body };
+    ['phone', 'email', 'address', 'city', 'region', 'postalCode'].forEach((field) => {
+      if (cleanedBody[field] === '') {
+        cleanedBody[field] = null;
+      }
+    });
+
+    const branch = await branchService.updateBranch(req.params.id, cleanedBody);
 
     logger.info(`Branch updated: ${req.params.id} by user ${req.user.id}`);
     return ApiResponse.success(res, 'Branch updated successfully', branch);

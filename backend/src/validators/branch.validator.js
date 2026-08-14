@@ -9,7 +9,7 @@ export const createBranchSchema = Joi.object({
   city: Joi.string().max(100).optional().allow('', null),
   region: Joi.string().max(100).optional().allow('', null),
   postalCode: Joi.string().max(20).optional().allow('', null),
-  managerId: Joi.number().integer().optional().allow(null),
+  managerId: Joi.alternatives().try(Joi.string().uuid(), Joi.number().integer()).optional().allow('', null),
   status: Joi.string().valid('active', 'inactive').default('active'),
 });
 
@@ -22,7 +22,7 @@ export const updateBranchSchema = Joi.object({
   city: Joi.string().max(100).allow('', null),
   region: Joi.string().max(100).allow('', null),
   postalCode: Joi.string().max(20).allow('', null),
-  managerId: Joi.number().integer().allow(null),
+  managerId: Joi.alternatives().try(Joi.string().uuid(), Joi.number().integer()).allow('', null),
   status: Joi.string().valid('active', 'inactive'),
 }).min(1);
 

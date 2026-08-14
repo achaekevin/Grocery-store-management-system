@@ -14,7 +14,11 @@ class NotificationService {
       return this.socket;
     }
 
-    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+    let socketUrl = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_SOCKET_URL) || 
+      (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:5000` : 'http://localhost:5000');
+    if (typeof window !== 'undefined' && socketUrl.includes('localhost') && window.location.hostname !== 'localhost') {
+      socketUrl = socketUrl.replace('localhost', window.location.hostname);
+    }
     
     this.socket = io(socketUrl, {
       auth: { token },
