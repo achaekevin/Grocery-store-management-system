@@ -9,7 +9,7 @@ import {
   Star,
   Award,
   ShoppingBag,
-  DollarSign,
+  Banknote,
   Calendar,
   TrendingUp,
 } from 'lucide-react';
@@ -111,11 +111,11 @@ export const CustomerProfile: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
+              <Banknote className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ${customer.totalPurchases?.toLocaleString()}
+                KSh {customer.totalPurchases?.toLocaleString()}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Spent</p>
             </div>

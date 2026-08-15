@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { StatCard } from '@components/common/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
 import {
-  DollarSign,
+  Banknote,
   Package,
   AlertTriangle,
   Calendar,
@@ -200,7 +200,7 @@ export const DashboardPage: React.FC = () => {
           <StatCard
             title="Today's Sales"
             value={formatCurrency(stats.todaySales)}
-            icon={DollarSign}
+            icon={Banknote}
             iconColor="text-green-600"
             iconBgColor="bg-green-100 dark:bg-green-900/20"
             change={yesterdayChange}
@@ -374,7 +374,7 @@ export const DashboardPage: React.FC = () => {
                   <p className="text-sm text-muted-foreground">Total Sales</p>
                   <p className="text-2xl font-bold">{formatCurrency(stats.todaySales)}</p>
                 </div>
-                <DollarSign className="h-10 w-10 text-green-600 opacity-50" />
+                <Banknote className="h-10 w-10 text-green-600 opacity-50" />
               </div>
               <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-card/50">
                 <div>

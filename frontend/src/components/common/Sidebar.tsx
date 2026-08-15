@@ -11,7 +11,6 @@ import {
   Users,
   Gift,
   Truck,
-  DollarSign,
   CreditCard,
   Smartphone,
   Building2,

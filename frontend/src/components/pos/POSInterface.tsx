@@ -9,7 +9,7 @@ import {
   Trash2,
   User,
   Tag,
-  DollarSign,
+  Banknote,
   CreditCard,
   Smartphone,
   Clock,
@@ -788,7 +788,7 @@ export const POSInterface: React.FC = () => {
                 disabled={cart.length === 0 || !selectedBranch}
                 className="w-full flex items-center justify-center gap-2 px-6 py-4 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed rounded-lg shadow-lg transition-all"
               >
-                <DollarSign className="w-5 h-5" />
+                <Banknote className="w-5 h-5" />
                 {!selectedBranch ? 'Select Branch First' : 'Complete Payment'}
               </button>
             </div>
@@ -820,7 +820,7 @@ export const POSInterface: React.FC = () => {
                       : 'border-gray-200 dark:border-gray-700'
                   )}
                 >
-                  <DollarSign className="w-6 h-6" />
+                  <Banknote className="w-6 h-6" />
                   <span className="text-sm font-medium">Cash</span>
                 </button>
                 <button

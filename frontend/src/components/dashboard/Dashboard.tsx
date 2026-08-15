@@ -5,7 +5,7 @@ import {
   Users,
   Package,
   ShoppingCart,
-  DollarSign,
+  Banknote,
   AlertTriangle,
   ArrowUpRight,
   Activity,
@@ -20,10 +20,10 @@ export const Dashboard: React.FC = () => {
   const stats = [
     {
       label: 'Total Revenue',
-      value: '$45,231.89',
+      value: 'KSh 45,231.89',
       change: '+20.1%',
       trend: 'up' as const,
-      icon: DollarSign,
+      icon: Banknote,
       color: 'bg-green-500',
     },
     {

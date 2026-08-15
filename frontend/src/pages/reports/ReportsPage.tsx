@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
-import { FileText, Download, Calendar, TrendingUp, Package, DollarSign, Users, Eye, Loader2, FileSpreadsheet } from 'lucide-react';
+import { FileText, Download, Calendar, TrendingUp, Package, Banknote, Users, Eye, Loader2, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@components/ui/Button';
 import { useAppSelector } from '@hooks/useAppSelector';
 import { useToast } from '@hooks/useToast';
@@ -153,7 +153,7 @@ export const ReportsPage: React.FC = () => {
     },
     {
       type: 'financial',
-      icon: DollarSign,
+      icon: Banknote,
       title: 'Financial Report',
       description: 'Revenue, expenses, and profit analysis',
       color: 'text-purple-600'

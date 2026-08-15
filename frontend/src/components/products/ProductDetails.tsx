@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Package,
   Barcode,
-  DollarSign,
   TrendingUp,
   Building2,
   Tag,
@@ -92,7 +91,7 @@ export const ProductDetails: React.FC = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Price</label>
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      ${product.price?.toFixed(2)}
+                      KSh {product.price?.toFixed(2)}
                     </p>
                   </div>
                   <div>

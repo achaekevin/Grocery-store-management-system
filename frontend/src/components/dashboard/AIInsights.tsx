@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   Package,
   ShoppingBag,
-  DollarSign,
   Lightbulb,
   CheckCircle,
   XCircle,

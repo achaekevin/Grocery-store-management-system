@@ -19,7 +19,7 @@ import {
 } from 'recharts';
 import {
   TrendingUp,
-  DollarSign,
+  Banknote,
   ShoppingCart,
   Package,
   Users,
@@ -84,7 +84,7 @@ export const AdvancedAnalytics: React.FC = () => {
   ];
 
   const chartOptions = [
-    { value: 'revenue', label: 'Revenue', icon: DollarSign },
+    { value: 'revenue', label: 'Revenue', icon: Banknote },
     { value: 'sales', label: 'Sales Trends', icon: TrendingUp },
     { value: 'products', label: 'Product Performance', icon: Package },
     { value: 'customers', label: 'Customer Growth', icon: Users },
@@ -383,7 +383,7 @@ export const AdvancedAnalytics: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    ${method.value.toLocaleString()}
+                    KSh {method.value.toLocaleString()}
                   </p>
                   <p className="text-xs text-gray-500">{method.percentage}%</p>
                 </div>
