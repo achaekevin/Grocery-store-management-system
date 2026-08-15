@@ -1,10 +1,22 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { User, AuthState } from '@types/index';
 
+// Synchronously recover session from localStorage on boot
+const token = localStorage.getItem('token');
+let user: User | null = null;
+try {
+  const userStr = localStorage.getItem('user');
+  if (userStr) {
+    user = JSON.parse(userStr);
+  }
+} catch (e) {
+  user = null;
+}
+
 const initialState: AuthState = {
-  user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: false,
+  user,
+  token,
+  isAuthenticated: !!(token && user),
   loading: false,
 };
 
@@ -41,12 +53,16 @@ const authSlice = createSlice({
       localStorage.setItem('user', JSON.stringify(action.payload));
     },
     restoreAuth: (state) => {
-      const token = localStorage.getItem('token');
-      const userStr = localStorage.getItem('user');
-      if (token && userStr) {
-        state.token = token;
-        state.user = JSON.parse(userStr);
-        state.isAuthenticated = true;
+      const storedToken = localStorage.getItem('token');
+      const storedUserStr = localStorage.getItem('user');
+      if (storedToken && storedUserStr) {
+        try {
+          state.token = storedToken;
+          state.user = JSON.parse(storedUserStr);
+          state.isAuthenticated = true;
+        } catch (e) {
+          state.isAuthenticated = false;
+        }
       }
     },
   },
