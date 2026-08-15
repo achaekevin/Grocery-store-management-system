@@ -25,6 +25,7 @@ import auditRoutes from './audit.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import advancedSearchRoutes from './advancedSearch.routes.js';
 import analyticsEnhancedRoutes from './analyticsEnhanced.routes.js';
+import customerPortalRoutes from './customerPortal.routes.js';
 
 const router = express.Router();
 
@@ -82,6 +83,7 @@ router.use('/audit', auditRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/advanced-search', advancedSearchRoutes);
 router.use('/analytics-enhanced', analyticsEnhancedRoutes);
+router.use('/customer', customerPortalRoutes);
 
 // Additional routes to be added:
 // router.use('/expenses', expenseRoutes);

@@ -1,5 +1,5 @@
 // Role-based permissions configuration
-export type RoleName = 'Super Admin' | 'Manager' | 'Cashier' | 'Inventory Clerk' | 'Accountant';
+export type RoleName = 'Super Admin' | 'Branch Manager' | 'Manager' | 'Cashier' | 'Inventory Clerk' | 'Accountant' | 'Customer';
 
 export interface Permission {
   module: string;
@@ -27,6 +27,18 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     'reports',
     'expenses',
     'settings',
+    'analytics',
+  ],
+  'Branch Manager': [
+    'dashboard',
+    'pos',
+    'products',
+    'inventory',
+    'customers',
+    'suppliers',
+    'sales',
+    'reports',
+    'expenses',
     'analytics',
   ],
   'Manager': [
@@ -59,6 +71,18 @@ export const ROLE_PERMISSIONS: Record<RoleName, string[]> = {
     'expenses',
     'analytics',
   ],
+  'Customer': [
+    'customer-portal',
+    'shop',
+    'cart',
+    'orders',
+    'loyalty',
+    'wishlist',
+    'offers',
+    'stores',
+    'profile',
+    'support',
+  ],
 };
 
 // Check if a user has permission to access a module
@@ -78,5 +102,11 @@ export const isAdmin = (userRole: string | undefined): boolean => {
 
 // Check if user has manager privileges
 export const isManager = (userRole: string | undefined): boolean => {
-  return userRole === 'Manager' || userRole === 'Super Admin';
+  return userRole === 'Manager' || userRole === 'Branch Manager' || userRole === 'Super Admin';
 };
+
+// Check if user is a customer
+export const isCustomer = (userRole: string | undefined): boolean => {
+  return userRole === 'Customer';
+};
+

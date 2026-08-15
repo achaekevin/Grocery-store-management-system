@@ -1,6 +1,4 @@
-// ============ CORE TYPES ============
-
-export type UserRole = 'Super Admin' | 'Branch Manager' | 'Cashier' | 'Inventory Clerk' | 'Accountant';
+export type UserRole = 'Super Admin' | 'Branch Manager' | 'Cashier' | 'Inventory Clerk' | 'Accountant' | 'Customer';
 
 export type OrderStatus = 'Pending' | 'Approved' | 'Delivered' | 'Cancelled';
 export type SaleStatus = 'Completed' | 'Voided' | 'Refunded';

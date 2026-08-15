@@ -39,21 +39,34 @@ export const LoginPage: React.FC = () => {
       if (response.success) {
         // Check if 2FA is required
         if (response.data.requiresTwoFactor) {
-          // Redirect to 2FA verification page
           navigate('/auth/verify-2fa', { state: { userId: response.data.user.id } });
           return;
         }
 
+        // Construct complete user object with role and business
+        const fullUser = {
+          ...response.data.user,
+          role: response.data.role || response.data.user?.role || { id: '', name: 'Super Admin', slug: 'super-admin' },
+          business: response.data.business || response.data.user?.business,
+          branch: response.data.branch || response.data.user?.branch,
+        };
+
         // Dispatch login success to Redux store
         dispatch(
           loginSuccess({
-            user: response.data.user,
+            user: fullUser,
             token: response.data.tokens.accessToken,
           })
         );
 
         success('Login successful!');
-        navigate('/dashboard');
+
+        const roleName = fullUser.role?.name || (fullUser.role as any);
+        if (roleName === 'Customer') {
+          navigate('/customer/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Invalid email or password';

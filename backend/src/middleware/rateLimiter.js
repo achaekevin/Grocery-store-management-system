@@ -63,18 +63,18 @@ export const generalLimiter = rateLimit({
  */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  max: 500, // relaxed for development & testing
   message: {
     success: false,
     message: 'Too many authentication attempts. Please try again after 15 minutes.',
     error: {
       code: 'AUTH_RATE_LIMIT_EXCEEDED',
-      hint: 'For security reasons, authentication attempts are limited to 5 per 15 minutes.',
+      hint: 'For security reasons, authentication attempts are limited.',
     },
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: false, // Count all requests including successful ones
+  skipSuccessfulRequests: true,
   store: getRedisStore('rl:auth:'),
   handler: rateLimitHandler,
 });

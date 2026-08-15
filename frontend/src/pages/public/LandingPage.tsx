@@ -296,6 +296,15 @@ export const LandingPage: React.FC = () => {
                     </motion.div>
                   </Link>
 
+                  <Link to="/customer/shop">
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.96 }}>
+                      <Button size="lg" className="rounded-2xl px-7 py-3 text-base font-bold bg-amber-500 hover:bg-amber-400 text-amber-950 shadow-xl shadow-amber-500/30 transition-all gap-2 border border-amber-300">
+                        <ShoppingCart className="h-5 w-5 text-amber-950" />
+                        Shop Online as Customer
+                      </Button>
+                    </motion.div>
+                  </Link>
+
                   <Link to="/auth/register">
                     <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.96 }}>
                       <Button size="lg" className="rounded-2xl px-8 py-3 text-base font-bold bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 text-slate-950 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-400/50 transition-all gap-2 border border-emerald-300/40">

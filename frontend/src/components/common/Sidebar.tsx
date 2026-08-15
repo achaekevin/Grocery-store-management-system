@@ -132,7 +132,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse 
 
   const canAccess = (item: NavItem) => {
     if (!item.module) return true;
-    return hasPermission(user?.role?.name, item.module);
+    const roleName = typeof user?.role === 'object' && user?.role !== null
+      ? user.role.name
+      : (user?.role as string);
+    if (!roleName) return true;
+    return hasPermission(roleName, item.module);
   };
 
   const accessibleItems = navigationItems.filter(canAccess);
