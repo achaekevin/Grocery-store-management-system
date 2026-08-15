@@ -8,7 +8,7 @@ export const generateReport = async (req, res) => {
     console.log('User:', req.user);
 
     const { type, period = 'month', format = 'pdf', filters = {} } = req.body;
-    
+
     // Get businessId from user, fallback to a default for testing
     const businessId = req.user?.businessId || req.user?.business_id || '00000000-0000-0000-0000-000000000001';
     const userId = req.user?.id || 'system';
@@ -80,20 +80,20 @@ export const generateReport = async (req, res) => {
         if (type === 'sales' && reportData.summary) {
           worksheet.addRow(['Summary']);
           worksheet.addRow(['Total Sales', reportData.summary.totalSales || 0]);
-          worksheet.addRow(['Total Revenue', `$${reportData.summary.totalRevenue || 0}`]);
-          worksheet.addRow(['Average Order Value', `$${reportData.summary.averageOrderValue || 0}`]);
+          worksheet.addRow(['Total Revenue', `KSh {(reportData.summary.totalRevenue || 0).toLocaleString()}`]);
+          worksheet.addRow(['Average Order Value', `KSh {(reportData.summary.averageOrderValue || 0).toLocaleString()}`]);
         } else if (type === 'inventory' && reportData.summary) {
           worksheet.addRow(['Summary']);
           worksheet.addRow(['Total Items', reportData.summary.totalItems || 0]);
-          worksheet.addRow(['Inventory Value', `$${reportData.summary.inventoryValue || 0}`]);
-          worksheet.addRow(['Potential Revenue', `$${reportData.summary.potentialRevenue || 0}`]);
+          worksheet.addRow(['Inventory Value', `KSh {(reportData.summary.inventoryValue || 0).toLocaleString()}`]);
+          worksheet.addRow(['Potential Revenue', `KSh {(reportData.summary.potentialRevenue || 0).toLocaleString()}`]);
         } else if (type === 'financial') {
           worksheet.addRow(['Financial Summary']);
-          worksheet.addRow(['Revenue', `$${reportData.revenue || 0}`]);
-          worksheet.addRow(['Cost of Goods Sold', `$${reportData.cogs || 0}`]);
-          worksheet.addRow(['Gross Profit', `$${reportData.grossProfit || 0}`]);
-          worksheet.addRow(['Expenses', `$${reportData.expenses || 0}`]);
-          worksheet.addRow(['Net Profit', `$${reportData.netProfit || 0}`]);
+          worksheet.addRow(['Revenue', `KSh {(reportData.revenue || 0).toLocaleString()}`]);
+          worksheet.addRow(['Cost of Goods Sold', `KSh {(reportData.cogs || 0).toLocaleString()}`]);
+          worksheet.addRow(['Gross Profit', `KSh {(reportData.grossProfit || 0).toLocaleString()}`]);
+          worksheet.addRow(['Expenses', `KSh {(reportData.expenses || 0).toLocaleString()}`]);
+          worksheet.addRow(['Net Profit', `KSh {(reportData.netProfit || 0).toLocaleString()}`]);
           worksheet.addRow(['Profit Margin', reportData.profitMargin || '0%']);
         } else {
           // Generic data display
@@ -115,7 +115,7 @@ export const generateReport = async (req, res) => {
         );
         res.setHeader(
           'Content-Disposition',
-          `attachment; filename=${type}_report_${Date.now()}.xlsx`
+          `attachment; filename=ksh.{type}_report_${Date.now()}.xlsx`
         );
 
         await workbook.xlsx.write(res);
@@ -129,11 +129,11 @@ export const generateReport = async (req, res) => {
       try {
         // Generate PDF file
         const doc = new PDFDocument({ margin: 50 });
-        
+
         // Set response headers
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=${type}_report_${Date.now()}.pdf`);
-        
+
         doc.pipe(res);
 
         // Add content to PDF
@@ -145,24 +145,24 @@ export const generateReport = async (req, res) => {
         // Add report data
         doc.fontSize(14).text('Report Summary:', { underline: true });
         doc.moveDown();
-        
+
         if (type === 'sales' && reportData.summary) {
           doc.fontSize(10);
           doc.text(`Total Sales: ${reportData.summary.totalSales || 0}`);
-          doc.text(`Total Revenue: $${reportData.summary.totalRevenue || 0}`);
-          doc.text(`Average Order Value: $${reportData.summary.averageOrderValue || 0}`);
+          doc.text(`Total Revenue: KSh ${(reportData.summary.totalRevenue || 0).toLocaleString()}`);
+          doc.text(`Average Order Value: KSh ${(reportData.summary.averageOrderValue || 0).toLocaleString()}`);
         } else if (type === 'inventory' && reportData.summary) {
           doc.fontSize(10);
           doc.text(`Total Items: ${reportData.summary.totalItems || 0}`);
-          doc.text(`Inventory Value: $${reportData.summary.inventoryValue || 0}`);
-          doc.text(`Potential Revenue: $${reportData.summary.potentialRevenue || 0}`);
+          doc.text(`Inventory Value: KSh ${(reportData.summary.inventoryValue || 0).toLocaleString()}`);
+          doc.text(`Potential Revenue: KSh ${(reportData.summary.potentialRevenue || 0).toLocaleString()}`);
         } else if (type === 'financial') {
           doc.fontSize(10);
-          doc.text(`Revenue: $${reportData.revenue || 0}`);
-          doc.text(`Cost of Goods Sold: $${reportData.cogs || 0}`);
-          doc.text(`Gross Profit: $${reportData.grossProfit || 0}`);
-          doc.text(`Expenses: $${reportData.expenses || 0}`);
-          doc.text(`Net Profit: $${reportData.netProfit || 0}`);
+          doc.text(`Revenue: KSh ${(reportData.revenue || 0).toLocaleString()}`);
+          doc.text(`Cost of Goods Sold: KSh ${(reportData.cogs || 0).toLocaleString()}`);
+          doc.text(`Gross Profit: KSh ${(reportData.grossProfit || 0).toLocaleString()}`);
+          doc.text(`Expenses: KSh ${(reportData.expenses || 0).toLocaleString()}`);
+          doc.text(`Net Profit: KSh ${(reportData.netProfit || 0).toLocaleString()}`);
           doc.text(`Profit Margin: ${reportData.profitMargin || '0%'}`);
         } else {
           doc.fontSize(10);
@@ -181,9 +181,9 @@ export const generateReport = async (req, res) => {
   } catch (error) {
     console.error('Error generating report:', error);
     console.error('Error stack:', error.stack);
-    
+
     if (!res.headersSent) {
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to generate report',
         message: error.message,
         details: process.env.NODE_ENV === 'development' ? error.stack : undefined

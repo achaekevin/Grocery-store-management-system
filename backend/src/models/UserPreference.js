@@ -52,7 +52,7 @@ const UserPreference = sequelize.define('UserPreference', {
   },
   currencyFormat: {
     type: DataTypes.STRING(10),
-    defaultValue: 'USD',
+    defaultValue: 'KES',
     field: 'currency_format',
   },
   notificationsEnabled: {

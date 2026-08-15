@@ -179,9 +179,9 @@ export const generateSalesReport = async (data, business, dateRange) => {
       doc.fontSize(14).text('Summary', { underline: true });
       doc.moveDown();
       doc.fontSize(10);
-      doc.text(`Total Sales: ${data.totalSales}`);
-      doc.text(`Total Revenue: ${data.totalRevenue.toFixed(2)}`);
-      doc.text(`Average Order Value: ${data.averageOrderValue.toFixed(2)}`);
+      doc.text(`Total Sales: ${data.totalSales || 0}`);
+      doc.text(`Total Revenue: KSh ${(data.totalRevenue || 0).toLocaleString()}`);
+      doc.text(`Average Order Value: KSh ${(data.averageOrderValue || 0).toLocaleString()}`);
       doc.moveDown();
 
       // Additional report content can be added here
