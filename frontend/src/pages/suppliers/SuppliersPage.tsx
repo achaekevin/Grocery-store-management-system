@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Mail, Phone, MapPin, Loader2, X, Building2 } from 'lucide-react';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
@@ -21,7 +22,8 @@ interface Supplier {
 }
 
 export const SuppliersPage: React.FC = () => {
-  const { token } = useAppSelector((state) => state.auth);
+  const { token, user } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate();
   const toast = useToast();
 
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -66,7 +68,7 @@ export const SuppliersPage: React.FC = () => {
 
   const handleAddSupplier = async () => {
     if (!formData.name || !formData.contactPerson || !formData.phone) {
-      toast.error('Please fill in required fields');
+      toast.error('Please fill in required fields (Name, Contact person, Phone)');
       return;
     }
 
@@ -77,10 +79,13 @@ export const SuppliersPage: React.FC = () => {
         formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Supplier added successfully!');
+      toast.success('Supplier added successfully! Redirecting to dashboard...');
       setShowAddModal(false);
       resetForm();
-      fetchSuppliers();
+      const dest = user?.role?.name === 'Customer' || user?.role === 'Customer' ? '/customer/dashboard' : '/dashboard';
+      setTimeout(() => {
+        navigate(dest);
+      }, 1000);
     } catch (error: any) {
       console.error('Error adding supplier:', error);
       toast.error(error.response?.data?.message || 'Failed to add supplier');

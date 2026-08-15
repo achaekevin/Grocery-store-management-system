@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Mail, Phone, MapPin, Loader2, X } from 'lucide-react';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
@@ -22,7 +23,8 @@ interface Customer {
 }
 
 export const CustomersPage: React.FC = () => {
-  const { token } = useAppSelector((state) => state.auth);
+  const { token, user } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate();
   const toast = useToast();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -89,10 +91,13 @@ export const CustomersPage: React.FC = () => {
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Customer added and saved successfully!');
+      toast.success('Customer added successfully! Redirecting to dashboard...');
       setShowAddModal(false);
       resetForm();
-      fetchCustomers();
+      const dest = user?.role?.name === 'Customer' || user?.role === 'Customer' ? '/customer/dashboard' : '/dashboard';
+      setTimeout(() => {
+        navigate(dest);
+      }, 1000);
     } catch (error: any) {
       console.error('Error adding customer:', error);
       toast.error(error.response?.data?.message || 'Failed to add customer');

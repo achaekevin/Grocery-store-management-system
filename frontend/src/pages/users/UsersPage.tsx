@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
@@ -34,7 +35,8 @@ interface Role {
 }
 
 export const UsersPage: React.FC = () => {
-  const { token } = useAppSelector((state) => state.auth);
+  const { token, user } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate();
   const toast = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -156,10 +158,13 @@ export const UsersPage: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      toast.success('User added successfully!');
+      toast.success('User added successfully! Redirecting to dashboard...');
       setShowAddModal(false);
       resetForm();
-      fetchUsers();
+      const dest = user?.role?.name === 'Customer' || user?.role === 'Customer' ? '/customer/dashboard' : '/dashboard';
+      setTimeout(() => {
+        navigate(dest);
+      }, 1000);
     } catch (error: any) {
       console.error('Error adding user:', error);
       toast.error(error.response?.data?.message || 'Failed to add user');
