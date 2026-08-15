@@ -198,20 +198,6 @@ export const ReportsPage: React.FC = () => {
         <p className="mt-1 text-muted-foreground">
           Generate and download business reports in PDF or Excel format
         </p>
-        {/* Debug Info */}
-        <div className="mt-2 text-sm text-gray-500">
-          Auth Token: {token ? '✓ Present' : '✗ Missing'} | 
-          API URL: {import.meta.env.VITE_API_BASE_URL || 'NOT SET'}
-        </div>
-        <Button 
-          onClick={() => {
-            console.log('Test button clicked!');
-            toast.success('Buttons are clickable!');
-          }}
-          className="mt-2"
-        >
-          Test Button Click
-        </Button>
       </div>
 
       {/* Report Types */}
