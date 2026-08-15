@@ -84,39 +84,57 @@ export const CustomerDashboardPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Hero Welcome & Search Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-slate-900 via-emerald-950 to-slate-900 text-white p-6 sm:p-10 shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-slate-950 bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950 text-white p-6 sm:p-10 shadow-2xl border border-slate-800">
         <div className="relative z-10 max-w-2xl space-y-4">
-          <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-xs">
+          <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-xs">
             <Sparkles className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
             <span>Welcome back to GroceryOS</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
             Good afternoon, <span className="text-emerald-400">{user?.firstName || 'Kevin'}</span>! 👋
           </h1>
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+          <p className="text-slate-200 text-sm sm:text-base leading-relaxed font-normal">
             What would you like to stock up on today? Enjoy farm-fresh dairy, crispy bakery items, and fresh organic produce delivered in under 45 minutes.
           </p>
 
           {/* Search bar inside Hero */}
           <form onSubmit={handleSearch} className="pt-2 flex flex-col sm:flex-row gap-2 max-w-lg">
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-400" />
               <input
                 type="text"
                 value={localSearch}
                 onChange={(e) => setLocalSearch(e.target.value)}
                 placeholder="Search products, brands, or essentials..."
-                className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-slate-900/80 backdrop-blur-md transition"
+                className="w-full pl-10 pr-4 py-3 bg-slate-900/90 border border-slate-700 rounded-2xl text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 shadow-inner transition"
               />
             </div>
             <button
               type="submit"
-              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm px-6 py-3 rounded-2xl transition shadow-lg shrink-0 flex items-center justify-center gap-2"
+              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm px-6 py-3 rounded-2xl transition shadow-lg shrink-0 flex items-center justify-center gap-2"
             >
               Browse Catalog <ArrowRight className="h-4 w-4" />
             </button>
           </form>
+
+          {/* Quick Search Suggestions */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs text-slate-300">
+            <span className="font-semibold text-emerald-400">Popular:</span>
+            {['Milk', 'Eggs', 'Bread', 'Tomatoes', 'Flour'].map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => {
+                  dispatch(setSearchQuery(item));
+                  navigate('/customer/shop');
+                }}
+                className="bg-white/10 hover:bg-white/20 text-slate-200 px-2.5 py-1 rounded-lg transition text-[11px] font-medium border border-white/10"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Decorative Floating Accent */}
@@ -128,7 +146,7 @@ export const CustomerDashboardPage: React.FC = () => {
       {/* Grid: Loyalty Card & Active Order Tracker */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Loyalty Member Status Card */}
-        <div className="lg:col-span-2 bg-linear-to-br from-amber-500 via-amber-600 to-amber-700 rounded-3xl p-6 sm:p-8 text-amber-950 shadow-lg relative overflow-hidden flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-amber-600 bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 rounded-3xl p-6 sm:p-8 text-amber-950 shadow-lg relative overflow-hidden flex flex-col justify-between">
           <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
@@ -330,7 +348,7 @@ export const CustomerDashboardPage: React.FC = () => {
       </div>
 
       {/* Weekend Banner Offer */}
-      <div className="bg-linear-to-r from-emerald-600 to-teal-700 rounded-3xl p-6 sm:p-8 text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-lg">
+      <div className="bg-emerald-600 bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl p-6 sm:p-8 text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-lg">
         <div className="space-y-2 text-center sm:text-left">
           <span className="bg-white/20 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
             Coupon: GROCERY20

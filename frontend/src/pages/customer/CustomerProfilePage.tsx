@@ -251,7 +251,7 @@ export const CustomerProfilePage: React.FC = () => {
 
         {/* Right Col: Account Membership & Preferences */}
         <div className="space-y-6">
-          <div className="bg-linear-to-br from-amber-500 to-amber-700 text-amber-950 p-6 rounded-3xl shadow-lg space-y-4">
+          <div className="bg-amber-600 bg-gradient-to-br from-amber-500 to-amber-700 text-amber-950 p-6 rounded-3xl shadow-lg space-y-4">
             <span className="bg-amber-950 text-amber-300 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
               Gold Tier Status
             </span>

@@ -53,7 +53,7 @@ export const CustomerOffersPage: React.FC = () => {
       </div>
 
       {/* Featured Weekend Sale Banner */}
-      <div className="bg-linear-to-r from-emerald-600 via-teal-600 to-emerald-800 rounded-3xl p-6 sm:p-10 text-white shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div className="bg-emerald-600 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-800 rounded-3xl p-6 sm:p-10 text-white shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="space-y-3 text-center sm:text-left relative z-10">
           <div className="inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
             <Flame className="h-4 w-4 text-amber-300 fill-amber-300" /> Weekend Fresh Grocery Sale

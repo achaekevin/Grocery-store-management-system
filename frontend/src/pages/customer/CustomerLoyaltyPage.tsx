@@ -69,7 +69,7 @@ export const CustomerLoyaltyPage: React.FC = () => {
       </div>
 
       {/* Gold Membership Hero Card */}
-      <div className="bg-linear-to-r from-amber-500 via-amber-600 to-amber-700 rounded-3xl p-6 sm:p-10 text-amber-950 shadow-xl relative overflow-hidden flex flex-col justify-between">
+      <div className="bg-amber-600 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 rounded-3xl p-6 sm:p-10 text-amber-950 shadow-xl relative overflow-hidden flex flex-col justify-between">
         <div className="relative z-10 flex flex-wrap items-start justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
