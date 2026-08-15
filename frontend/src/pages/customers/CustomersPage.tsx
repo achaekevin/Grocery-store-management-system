@@ -53,7 +53,16 @@ export const CustomersPage: React.FC = () => {
         `${import.meta.env.VITE_API_BASE_URL}/customers`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setCustomers(response.data?.data || []);
+      const items = Array.isArray(response.data?.data) ? response.data.data : (response.data?.data?.customers || []);
+      const mapped = items.map((c: any) => {
+        const parts = (c.name || '').split(' ');
+        return {
+          ...c,
+          firstName: c.firstName || parts[0] || 'Customer',
+          lastName: c.lastName || parts.slice(1).join(' ') || '',
+        };
+      });
+      setCustomers(mapped);
     } catch (error: any) {
       console.error('Error fetching customers:', error);
       toast.error('Failed to load customers');
@@ -65,18 +74,22 @@ export const CustomersPage: React.FC = () => {
 
   const handleAddCustomer = async () => {
     if (!formData.firstName || !formData.lastName || !formData.phone) {
-      toast.error('Please fill in required fields');
+      toast.error('Please fill in required fields (First name, Last name, Phone)');
       return;
     }
 
     setSubmitting(true);
     try {
+      const payload = {
+        ...formData,
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+      };
       await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/customers`,
-        formData,
+        payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Customer added successfully!');
+      toast.success('Customer added and saved successfully!');
       setShowAddModal(false);
       resetForm();
       fetchCustomers();
@@ -96,9 +109,13 @@ export const CustomersPage: React.FC = () => {
 
     setSubmitting(true);
     try {
+      const payload = {
+        ...formData,
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+      };
       await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}/customers/${editingCustomer.id}`,
-        formData,
+        payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success('Customer updated successfully!');

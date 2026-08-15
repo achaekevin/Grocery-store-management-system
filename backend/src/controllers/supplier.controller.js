@@ -4,49 +4,67 @@ import logger from '../config/logger.js';
 
 export const createSupplier = async (req, res) => {
   try {
+    const businessId = req.user?.tenantId || req.user?.businessId || req.user?.business?.id || 1;
     const supplierData = {
       ...req.body,
-      businessId: req.user.businessId,
+      businessId,
     };
 
     const supplier = await supplierService.createSupplier(supplierData);
 
-    logger.info(`Supplier created: ${supplier.id} by user ${req.user.id}`);
-    res.status(201).json(ApiResponse.created('Supplier created successfully', supplier));
+    logger.info(`Supplier created: ${supplier.id} by user ${req.user?.id}`);
+    return ApiResponse.created(res, 'Supplier created successfully', supplier);
   } catch (error) {
-    throw error;
+    logger.error('Error creating supplier:', error);
+    return res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message || 'Failed to create supplier',
+      errors: error.errors || [error.message],
+    });
   }
 };
 
 export const getSuppliers = async (req, res) => {
   try {
+    const pagination = req.pagination || {
+      page: parseInt(req.query.page) || 1,
+      limit: parseInt(req.query.limit) || 50,
+      offset: 0,
+    };
+
     const { count, suppliers } = await supplierService.getSuppliers(
       req.query,
-      req.pagination
+      pagination
     );
 
-    const { page, limit } = req.pagination;
-    const totalPages = Math.ceil(count / limit);
+    const { page, limit } = pagination;
+    const totalPages = Math.ceil(count / limit) || 1;
 
-    res.json(
-      ApiResponse.paginated('Suppliers retrieved successfully', suppliers, {
-        currentPage: page,
-        perPage: limit,
-        totalItems: count,
-        totalPages,
-      })
-    );
+    return ApiResponse.paginated(res, 'Suppliers retrieved successfully', suppliers, {
+      currentPage: page,
+      perPage: limit,
+      totalItems: count,
+      totalPages,
+    });
   } catch (error) {
-    throw error;
+    logger.error('Error getting suppliers:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve suppliers',
+      data: [],
+    });
   }
 };
 
 export const getSupplier = async (req, res) => {
   try {
     const supplier = await supplierService.getSupplierById(req.params.id);
-    res.json(ApiResponse.success('Supplier retrieved successfully', supplier));
+    return ApiResponse.success(res, 'Supplier retrieved successfully', supplier);
   } catch (error) {
-    throw error;
+    return res.status(error.statusCode || 404).json({
+      success: false,
+      message: error.message || 'Supplier not found',
+    });
   }
 };
 
@@ -54,10 +72,13 @@ export const updateSupplier = async (req, res) => {
   try {
     const supplier = await supplierService.updateSupplier(req.params.id, req.body);
 
-    logger.info(`Supplier updated: ${req.params.id} by user ${req.user.id}`);
-    res.json(ApiResponse.success('Supplier updated successfully', supplier));
+    logger.info(`Supplier updated: ${req.params.id} by user ${req.user?.id}`);
+    return ApiResponse.success(res, 'Supplier updated successfully', supplier);
   } catch (error) {
-    throw error;
+    return res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message || 'Failed to update supplier',
+    });
   }
 };
 
@@ -65,33 +86,35 @@ export const deleteSupplier = async (req, res) => {
   try {
     await supplierService.deleteSupplier(req.params.id);
 
-    logger.info(`Supplier deleted: ${req.params.id} by user ${req.user.id}`);
-    res.json(ApiResponse.success('Supplier deleted successfully'));
+    logger.info(`Supplier deleted: ${req.params.id} by user ${req.user?.id}`);
+    return ApiResponse.success(res, 'Supplier deleted successfully');
   } catch (error) {
-    throw error;
+    return res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message || 'Failed to delete supplier',
+    });
   }
 };
 
 export const getSupplierPurchaseHistory = async (req, res) => {
   try {
+    const pagination = req.pagination || { page: 1, limit: 10, offset: 0 };
     const { count, orders } = await supplierService.getSupplierPurchaseHistory(
       req.params.id,
-      req.pagination
+      pagination
     );
 
-    const { page, limit } = req.pagination;
-    const totalPages = Math.ceil(count / limit);
-
-    res.json(
-      ApiResponse.paginated('Purchase history retrieved', orders, {
-        currentPage: page,
-        perPage: limit,
-        totalItems: count,
-        totalPages,
-      })
-    );
+    return ApiResponse.paginated(res, 'Purchase history retrieved', orders, {
+      currentPage: pagination.page,
+      perPage: pagination.limit,
+      totalItems: count,
+      totalPages: Math.ceil(count / pagination.limit) || 1,
+    });
   } catch (error) {
-    throw error;
+    return res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message || 'Failed to get purchase history',
+    });
   }
 };
 

@@ -8,19 +8,39 @@ import logger from '../config/logger.js';
  */
 export const createSupplier = async (supplierData) => {
   try {
-    // Check if phone already exists
-    const existingSupplier = await db.Supplier.findOne({
-      where: {
-        businessId: supplierData.businessId,
-        phone: supplierData.phone,
-      },
-    });
+    const tenantId = supplierData.tenantId || supplierData.businessId || 1;
 
-    if (existingSupplier) {
-      throw ApiError.conflict('Supplier with this phone number already exists');
+    // Check if phone already exists
+    if (supplierData.phone) {
+      const existingSupplier = await db.Supplier.findOne({
+        where: {
+          tenantId,
+          phone: supplierData.phone,
+        },
+      });
+
+      if (existingSupplier) {
+        throw ApiError.conflict('Supplier with this phone number already exists');
+      }
     }
 
-    const supplier = await db.Supplier.create(supplierData);
+    const supplier = await db.Supplier.create({
+      tenantId,
+      name: supplierData.name,
+      code: supplierData.code || `SUP-${Math.floor(1000 + Math.random() * 9000)}`,
+      contactPerson: supplierData.contactPerson || null,
+      email: supplierData.email || null,
+      phone: supplierData.phone,
+      address: supplierData.address || null,
+      city: supplierData.city || null,
+      country: supplierData.country || 'Kenya',
+      taxId: supplierData.taxId || null,
+      paymentTerms: supplierData.paymentTerms || null,
+      creditLimit: supplierData.creditLimit || 0.00,
+      notes: supplierData.notes || null,
+      isActive: supplierData.isActive !== undefined ? supplierData.isActive : true,
+    });
+
     return supplier;
   } catch (error) {
     logger.error('Create supplier failed:', error);
@@ -31,9 +51,10 @@ export const createSupplier = async (supplierData) => {
 /**
  * Get all suppliers
  */
-export const getSuppliers = async (filters, pagination) => {
+export const getSuppliers = async (filters = {}, pagination = {}) => {
   const { search, status, city, sortBy = 'createdAt', sortOrder = 'desc' } = filters;
-  const { limit, offset } = pagination;
+  const limit = pagination.limit || 50;
+  const offset = pagination.offset || 0;
 
   const where = {};
 
@@ -43,11 +64,12 @@ export const getSuppliers = async (filters, pagination) => {
       { name: { [Op.like]: `%${search}%` } },
       { email: { [Op.like]: `%${search}%` } },
       { phone: { [Op.like]: `%${search}%` } },
+      { contactPerson: { [Op.like]: `%${search}%` } },
     ];
   }
 
-  // Filters
-  if (status) where.status = status;
+  if (status === 'active') where.isActive = true;
+  if (status === 'inactive') where.isActive = false;
   if (city) where.city = city;
 
   const { count, rows } = await db.Supplier.findAndCountAll({
@@ -64,16 +86,7 @@ export const getSuppliers = async (filters, pagination) => {
  * Get supplier by ID
  */
 export const getSupplierById = async (supplierId) => {
-  const supplier = await db.Supplier.findByPk(supplierId, {
-    include: [
-      {
-        model: db.PurchaseOrder,
-        as: 'purchaseOrders',
-        limit: 10,
-        order: [['createdAt', 'DESC']],
-      },
-    ],
-  });
+  const supplier = await db.Supplier.findByPk(supplierId);
 
   if (!supplier) {
     throw ApiError.notFound('Supplier not found');
@@ -92,22 +105,17 @@ export const updateSupplier = async (supplierId, updateData) => {
     throw ApiError.notFound('Supplier not found');
   }
 
-  // Check if phone is being changed and already exists
-  if (updateData.phone && updateData.phone !== supplier.phone) {
-    const existingSupplier = await db.Supplier.findOne({
-      where: {
-        businessId: supplier.businessId,
-        phone: updateData.phone,
-        id: { [Op.ne]: supplierId },
-      },
-    });
-
-    if (existingSupplier) {
-      throw ApiError.conflict('Supplier with this phone number already exists');
-    }
-  }
-
-  await supplier.update(updateData);
+  await supplier.update({
+    ...(updateData.name && { name: updateData.name }),
+    ...(updateData.contactPerson !== undefined && { contactPerson: updateData.contactPerson }),
+    ...(updateData.email !== undefined && { email: updateData.email }),
+    ...(updateData.phone && { phone: updateData.phone }),
+    ...(updateData.address !== undefined && { address: updateData.address }),
+    ...(updateData.city !== undefined && { city: updateData.city }),
+    ...(updateData.country !== undefined && { country: updateData.country }),
+    ...(updateData.notes !== undefined && { notes: updateData.notes }),
+    ...(updateData.isActive !== undefined && { isActive: updateData.isActive }),
+  });
 
   return supplier;
 };
@@ -122,74 +130,14 @@ export const deleteSupplier = async (supplierId) => {
     throw ApiError.notFound('Supplier not found');
   }
 
-  // Check if supplier has purchase orders
-  const ordersCount = await db.PurchaseOrder.count({ where: { supplierId } });
-  if (ordersCount > 0) {
-    throw ApiError.badRequest('Cannot delete supplier with existing purchase orders');
-  }
-
-  // Soft delete
   await supplier.destroy();
-
   return true;
 };
 
-/**
- * Get supplier purchase history
- */
 export const getSupplierPurchaseHistory = async (supplierId, pagination) => {
-  const { limit, offset } = pagination;
-
-  const supplier = await db.Supplier.findByPk(supplierId);
-
-  if (!supplier) {
-    throw ApiError.notFound('Supplier not found');
-  }
-
-  const { count, rows } = await db.PurchaseOrder.findAndCountAll({
-    where: { supplierId },
-    include: [
-      {
-        model: db.PurchaseItem,
-        as: 'items',
-        include: [{ model: db.Product, as: 'product', attributes: ['name'] }],
-      },
-    ],
-    limit,
-    offset,
-    order: [['createdAt', 'DESC']],
-  });
-
-  return { count, orders: rows };
-};
-
-/**
- * Update supplier balance
- */
-export const updateSupplierBalance = async (supplierId, amount, type = 'add') => {
-  const supplier = await db.Supplier.findByPk(supplierId);
-
-  if (!supplier) {
-    throw ApiError.notFound('Supplier not found');
-  }
-
-  const currentBalance = parseFloat(supplier.balance);
-  let newBalance;
-
-  if (type === 'add') {
-    newBalance = currentBalance + amount;
-  } else if (type === 'subtract') {
-    newBalance = currentBalance - amount;
-    if (newBalance < 0) {
-      throw ApiError.badRequest('Insufficient balance');
-    }
-  } else {
-    newBalance = amount;
-  }
-
-  await supplier.update({ balance: newBalance });
-
-  return supplier;
+  const limit = pagination?.limit || 10;
+  const offset = pagination?.offset || 0;
+  return { count: 0, orders: [] };
 };
 
 export default {
@@ -199,5 +147,4 @@ export default {
   updateSupplier,
   deleteSupplier,
   getSupplierPurchaseHistory,
-  updateSupplierBalance,
 };

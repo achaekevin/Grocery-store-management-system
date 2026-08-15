@@ -4,7 +4,9 @@ import Joi from 'joi';
  * Validation schema for creating a customer
  */
 export const createCustomerSchema = Joi.object({
-  name: Joi.string().max(255).required(),
+  name: Joi.string().max(255).allow('', null),
+  firstName: Joi.string().max(255).allow('', null),
+  lastName: Joi.string().max(255).allow('', null),
   email: Joi.string().email().max(255).allow('', null),
   phone: Joi.string().max(20).required(),
   address: Joi.string().allow('', null),
@@ -22,6 +24,8 @@ export const createCustomerSchema = Joi.object({
  */
 export const updateCustomerSchema = Joi.object({
   name: Joi.string().max(255),
+  firstName: Joi.string().max(255).allow('', null),
+  lastName: Joi.string().max(255).allow('', null),
   email: Joi.string().email().max(255).allow('', null),
   phone: Joi.string().max(20),
   address: Joi.string().allow('', null),
@@ -54,7 +58,7 @@ export const customerFiltersSchema = Joi.object({
   minLoyaltyPoints: Joi.number().integer().min(0),
   city: Joi.string().max(100),
   page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(10),
+  limit: Joi.number().integer().min(1).max(100).default(50),
   sortBy: Joi.string().valid('name', 'createdAt', 'loyaltyPoints', 'totalSpent').default('createdAt'),
   sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
 });

@@ -1,118 +1,144 @@
 /**
  * Standardized API Response Utility
+ * Supports both:
+ * 1. ApiResponse.success(res, message, data, statusCode)
+ * 2. res.json(ApiResponse.success(message, data))
  */
 
 class ApiResponse {
-  /**
-   * Success response
-   * @param {Object} res - Express response object
-   * @param {string} message - Success message
-   * @param {*} data - Response data
-   * @param {number} statusCode - HTTP status code
-   */
-  static success(res, message = 'Success', data = null, statusCode = 200) {
-    return res.status(statusCode).json({
+  static success(arg1, arg2 = 'Success', arg3 = null, arg4 = 200) {
+    // If arg1 is Express response object
+    if (arg1 && typeof arg1.status === 'function') {
+      const res = arg1;
+      const message = typeof arg2 === 'string' ? arg2 : 'Success';
+      const data = arg3 !== undefined ? arg3 : (typeof arg2 !== 'string' ? arg2 : null);
+      const statusCode = typeof arg4 === 'number' ? arg4 : 200;
+      return res.status(statusCode).json({
+        success: true,
+        message,
+        data,
+      });
+    }
+
+    // Standalone object return
+    const message = typeof arg1 === 'string' ? arg1 : 'Success';
+    const data = arg2 !== undefined ? arg2 : (typeof arg1 !== 'string' ? arg1 : null);
+    return {
       success: true,
       message,
       data,
-    });
+    };
   }
 
-  /**
-   * Error response
-   * @param {Object} res - Express response object
-   * @param {string} message - Error message
-   * @param {Array} errors - Error details
-   * @param {number} statusCode - HTTP status code
-   */
-  static error(res, message = 'Error', errors = [], statusCode = 400) {
-    return res.status(statusCode).json({
+  static created(arg1, arg2 = 'Resource created successfully', arg3 = null) {
+    if (arg1 && typeof arg1.status === 'function') {
+      const res = arg1;
+      const message = typeof arg2 === 'string' ? arg2 : 'Resource created successfully';
+      const data = arg3 !== undefined ? arg3 : (typeof arg2 !== 'string' ? arg2 : null);
+      return res.status(201).json({
+        success: true,
+        message,
+        data,
+      });
+    }
+
+    const message = typeof arg1 === 'string' ? arg1 : 'Resource created successfully';
+    const data = arg2 !== undefined ? arg2 : (typeof arg1 !== 'string' ? arg1 : null);
+    return {
+      success: true,
+      message,
+      data,
+    };
+  }
+
+  static error(arg1, arg2 = 'Error', arg3 = [], arg4 = 400) {
+    if (arg1 && typeof arg1.status === 'function') {
+      const res = arg1;
+      const message = typeof arg2 === 'string' ? arg2 : 'Error';
+      const errors = Array.isArray(arg3) ? arg3 : [arg3];
+      const statusCode = typeof arg4 === 'number' ? arg4 : 400;
+      return res.status(statusCode).json({
+        success: false,
+        message,
+        errors,
+      });
+    }
+
+    const message = typeof arg1 === 'string' ? arg1 : 'Error';
+    const errors = Array.isArray(arg2) ? arg2 : [arg2];
+    return {
       success: false,
       message,
-      errors: Array.isArray(errors) ? errors : [errors],
-    });
+      errors,
+    };
   }
 
-  /**
-   * Paginated response
-   * @param {Object} res - Express response object
-   * @param {string} message - Success message
-   * @param {Array} data - Response data
-   * @param {Object} pagination - Pagination metadata
-   */
-  static paginated(res, message = 'Success', data = [], pagination = {}) {
-    return res.status(200).json({
+  static paginated(arg1, arg2 = 'Success', arg3 = [], arg4 = {}) {
+    if (arg1 && typeof arg1.status === 'function') {
+      const res = arg1;
+      const message = typeof arg2 === 'string' ? arg2 : 'Success';
+      const data = Array.isArray(arg3) ? arg3 : [];
+      const pagination = arg4 || {};
+      return res.status(200).json({
+        success: true,
+        message,
+        data,
+        pagination: {
+          total: pagination.total || pagination.totalItems || data.length,
+          page: pagination.page || pagination.currentPage || 1,
+          pageSize: pagination.pageSize || pagination.perPage || 20,
+          totalPages: pagination.totalPages || Math.ceil((pagination.total || data.length) / 20) || 1,
+        },
+      });
+    }
+
+    const message = typeof arg1 === 'string' ? arg1 : 'Success';
+    const data = Array.isArray(arg2) ? arg2 : [];
+    const pagination = arg3 || {};
+    return {
       success: true,
       message,
       data,
       pagination: {
-        total: pagination.total || 0,
-        page: pagination.page || 1,
-        pageSize: pagination.pageSize || 20,
-        totalPages: pagination.totalPages || 0,
+        total: pagination.total || pagination.totalItems || data.length,
+        page: pagination.page || pagination.currentPage || 1,
+        pageSize: pagination.pageSize || pagination.perPage || 20,
+        totalPages: pagination.totalPages || Math.ceil((pagination.total || data.length) / 20) || 1,
       },
-    });
+    };
   }
 
-  /**
-   * Created response (201)
-   */
-  static created(res, message = 'Resource created successfully', data = null) {
-    return this.success(res, message, data, 201);
-  }
-
-  /**
-   * No content response (204)
-   */
   static noContent(res) {
-    return res.status(204).send();
+    if (res && typeof res.status === 'function') {
+      return res.status(204).send();
+    }
+    return { success: true };
   }
 
-  /**
-   * Bad request (400)
-   */
   static badRequest(res, message = 'Bad request', errors = []) {
     return this.error(res, message, errors, 400);
   }
 
-  /**
-   * Unauthorized (401)
-   */
   static unauthorized(res, message = 'Unauthorized', errors = []) {
     return this.error(res, message, errors, 401);
   }
 
-  /**
-   * Forbidden (403)
-   */
   static forbidden(res, message = 'Forbidden', errors = []) {
     return this.error(res, message, errors, 403);
   }
 
-  /**
-   * Not found (404)
-   */
   static notFound(res, message = 'Resource not found', errors = []) {
     return this.error(res, message, errors, 404);
   }
 
-  /**
-   * Conflict (409)
-   */
   static conflict(res, message = 'Conflict', errors = []) {
     return this.error(res, message, errors, 409);
   }
 
-  /**
-   * Unprocessable entity (422)
-   */
   static unprocessable(res, message = 'Unprocessable entity', errors = []) {
     return this.error(res, message, errors, 422);
   }
 
-  /**
-   * Internal server error (500)
-   */
   static internal(res, message = 'Internal server error', errors = []) {
     return this.error(res, message, errors, 500);
   }

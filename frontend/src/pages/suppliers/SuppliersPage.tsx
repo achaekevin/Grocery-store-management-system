@@ -53,7 +53,8 @@ export const SuppliersPage: React.FC = () => {
         `${import.meta.env.VITE_API_BASE_URL}/suppliers`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setSuppliers(response.data?.data || []);
+      const items = Array.isArray(response.data?.data) ? response.data.data : (response.data?.data?.suppliers || []);
+      setSuppliers(items);
     } catch (error: any) {
       console.error('Error fetching suppliers:', error);
       toast.error('Failed to load suppliers');

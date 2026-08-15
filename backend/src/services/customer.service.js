@@ -8,33 +8,46 @@ import logger from '../config/logger.js';
  */
 export const createCustomer = async (customerData) => {
   try {
+    const tenantId = customerData.tenantId || customerData.businessId || 1;
+
     // Check if phone already exists
-    const existingCustomer = await db.Customer.findOne({
-      where: {
-        businessId: customerData.businessId,
-        phone: customerData.phone,
-      },
-    });
-
-    if (existingCustomer) {
-      throw ApiError.conflict('Customer with this phone number already exists');
-    }
-
-    // Check if email already exists (if provided)
-    if (customerData.email) {
-      const existingEmail = await db.Customer.findOne({
+    if (customerData.phone) {
+      const existingCustomer = await db.Customer.findOne({
         where: {
-          businessId: customerData.businessId,
-          email: customerData.email,
+          tenantId,
+          phone: customerData.phone,
         },
       });
 
-      if (existingEmail) {
-        throw ApiError.conflict('Customer with this email already exists');
+      if (existingCustomer) {
+        throw ApiError.conflict('Customer with this phone number already exists');
       }
     }
 
-    const customer = await db.Customer.create(customerData);
+    // Name splitting if firstName / lastName not provided directly
+    let firstName = customerData.firstName;
+    let lastName = customerData.lastName;
+    if (!firstName && customerData.name) {
+      const parts = customerData.name.trim().split(' ');
+      firstName = parts[0] || 'Customer';
+      lastName = parts.slice(1).join(' ') || '';
+    }
+
+    const customer = await db.Customer.create({
+      tenantId,
+      customerCode: customerData.customerCode || `CUST-${Math.floor(10000 + Math.random() * 90000)}`,
+      firstName: firstName || 'Customer',
+      lastName: lastName || '',
+      email: customerData.email || null,
+      phone: customerData.phone,
+      address: customerData.address || null,
+      city: customerData.city || null,
+      postalCode: customerData.postalCode || null,
+      membershipLevel: customerData.loyaltyTier || customerData.membershipLevel || 'Bronze',
+      loyaltyPoints: customerData.loyaltyPoints || 0,
+      notes: customerData.notes || null,
+      isActive: customerData.isActive !== undefined ? customerData.isActive : true,
+    });
 
     return customer;
   } catch (error) {
@@ -46,34 +59,32 @@ export const createCustomer = async (customerData) => {
 /**
  * Get all customers with filters and pagination
  */
-export const getCustomers = async (filters, pagination) => {
+export const getCustomers = async (filters = {}, pagination = {}) => {
   const {
     search,
-    loyaltyTier,
     status,
-    minLoyaltyPoints,
     city,
     sortBy = 'createdAt',
     sortOrder = 'desc',
   } = filters;
 
-  const { limit, offset } = pagination;
+  const limit = pagination.limit || 50;
+  const offset = pagination.offset || 0;
 
   const where = {};
 
   // Text search
   if (search) {
     where[Op.or] = [
-      { name: { [Op.like]: `%${search}%` } },
+      { firstName: { [Op.like]: `%${search}%` } },
+      { lastName: { [Op.like]: `%${search}%` } },
       { email: { [Op.like]: `%${search}%` } },
       { phone: { [Op.like]: `%${search}%` } },
     ];
   }
 
-  // Filters
-  if (loyaltyTier) where.loyaltyTier = loyaltyTier;
-  if (status) where.status = status;
-  if (minLoyaltyPoints) where.loyaltyPoints = { [Op.gte]: minLoyaltyPoints };
+  if (status === 'active') where.isActive = true;
+  if (status === 'inactive') where.isActive = false;
   if (city) where.city = city;
 
   const { count, rows } = await db.Customer.findAndCountAll({
@@ -90,22 +101,7 @@ export const getCustomers = async (filters, pagination) => {
  * Get customer by ID
  */
 export const getCustomerById = async (customerId) => {
-  const customer = await db.Customer.findByPk(customerId, {
-    include: [
-      {
-        model: db.Sale,
-        as: 'sales',
-        limit: 10,
-        order: [['createdAt', 'DESC']],
-      },
-      {
-        model: db.LoyaltyTransaction,
-        as: 'loyaltyTransactions',
-        limit: 10,
-        order: [['createdAt', 'DESC']],
-      },
-    ],
-  });
+  const customer = await db.Customer.findByPk(customerId);
 
   if (!customer) {
     throw ApiError.notFound('Customer not found');
@@ -124,37 +120,24 @@ export const updateCustomer = async (customerId, updateData) => {
     throw ApiError.notFound('Customer not found');
   }
 
-  // Check if phone is being changed and already exists
-  if (updateData.phone && updateData.phone !== customer.phone) {
-    const existingCustomer = await db.Customer.findOne({
-      where: {
-        businessId: customer.businessId,
-        phone: updateData.phone,
-        id: { [Op.ne]: customerId },
-      },
-    });
-
-    if (existingCustomer) {
-      throw ApiError.conflict('Customer with this phone number already exists');
-    }
+  let firstName = updateData.firstName;
+  let lastName = updateData.lastName;
+  if (!firstName && updateData.name) {
+    const parts = updateData.name.trim().split(' ');
+    firstName = parts[0];
+    lastName = parts.slice(1).join(' ');
   }
 
-  // Check if email is being changed and already exists
-  if (updateData.email && updateData.email !== customer.email) {
-    const existingEmail = await db.Customer.findOne({
-      where: {
-        businessId: customer.businessId,
-        email: updateData.email,
-        id: { [Op.ne]: customerId },
-      },
-    });
-
-    if (existingEmail) {
-      throw ApiError.conflict('Customer with this email already exists');
-    }
-  }
-
-  await customer.update(updateData);
+  await customer.update({
+    ...(firstName && { firstName }),
+    ...(lastName !== undefined && { lastName }),
+    ...(updateData.email !== undefined && { email: updateData.email }),
+    ...(updateData.phone && { phone: updateData.phone }),
+    ...(updateData.address !== undefined && { address: updateData.address }),
+    ...(updateData.city !== undefined && { city: updateData.city }),
+    ...(updateData.loyaltyPoints !== undefined && { loyaltyPoints: updateData.loyaltyPoints }),
+    ...(updateData.notes !== undefined && { notes: updateData.notes }),
+  });
 
   return customer;
 };
@@ -169,109 +152,40 @@ export const deleteCustomer = async (customerId) => {
     throw ApiError.notFound('Customer not found');
   }
 
-  // Soft delete
   await customer.destroy();
-
   return true;
 };
 
-/**
- * Add/adjust loyalty points
- */
-export const adjustLoyaltyPoints = async (customerId, branchId, pointsData) => {
-  const transaction = await db.sequelize.transaction();
-
-  try {
-    const customer = await db.Customer.findByPk(customerId);
-
-    if (!customer) {
-      throw ApiError.notFound('Customer not found');
-    }
-
-    const { points, type, description } = pointsData;
-    const pointsBefore = customer.loyaltyPoints;
-    let pointsAfter;
-
-    if (type === 'redeemed') {
-      if (customer.loyaltyPoints < Math.abs(points)) {
-        throw ApiError.badRequest('Insufficient loyalty points');
-      }
-      pointsAfter = pointsBefore - Math.abs(points);
-    } else {
-      pointsAfter = pointsBefore + Math.abs(points);
-    }
-
-    // Update customer points
-    await customer.update({ loyaltyPoints: pointsAfter }, { transaction });
-
-    // Create loyalty transaction
-    await db.LoyaltyTransaction.create(
-      {
-        customerId,
-        branchId,
-        type,
-        points: type === 'redeemed' ? -Math.abs(points) : Math.abs(points),
-        pointsBefore,
-        pointsAfter,
-        description,
-      },
-      { transaction }
-    );
-
-    await transaction.commit();
-
-    return customer;
-  } catch (error) {
-    await transaction.rollback();
-    logger.error('Adjust loyalty points failed:', error);
-    throw error;
-  }
-};
-
-/**
- * Get customer purchase history
- */
-export const getCustomerPurchaseHistory = async (customerId, pagination) => {
-  const { limit, offset } = pagination;
-
+export const adjustLoyaltyPoints = async (customerId, branchId, data) => {
   const customer = await db.Customer.findByPk(customerId);
-
   if (!customer) {
     throw ApiError.notFound('Customer not found');
   }
 
+  const pointsChange = data.type === 'redeemed' ? -Math.abs(data.points) : Math.abs(data.points);
+  customer.loyaltyPoints = Math.max(0, (customer.loyaltyPoints || 0) + pointsChange);
+  await customer.save();
+
+  return customer;
+};
+
+export const getCustomerPurchaseHistory = async (customerId, pagination) => {
+  const limit = pagination?.limit || 10;
+  const offset = pagination?.offset || 0;
   const { count, rows } = await db.Sale.findAndCountAll({
     where: { customerId },
-    include: [
-      {
-        model: db.SaleItem,
-        as: 'items',
-        include: [{ model: db.Product, as: 'product', attributes: ['name'] }],
-      },
-      {
-        model: db.Branch,
-        as: 'branch',
-        attributes: ['name'],
-      },
-    ],
     limit,
     offset,
     order: [['createdAt', 'DESC']],
   });
-
   return { count, sales: rows };
 };
 
-/**
- * Get top customers by spending
- */
-export const getTopCustomers = async (businessId, limit = 10) => {
+export const getTopCustomers = async (tenantId, limit = 10) => {
   const customers = await db.Customer.findAll({
-    where: { businessId },
-    order: [['totalSpent', 'DESC']],
     limit,
+    order: [['totalPurchases', 'DESC']],
   });
-
   return customers;
 };
 

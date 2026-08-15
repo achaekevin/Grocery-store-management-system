@@ -56,10 +56,8 @@ export const CustomerDashboardPage: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (localSearch.trim()) {
-      dispatch(setSearchQuery(localSearch.trim()));
-      navigate('/customer/shop');
-    }
+    dispatch(setSearchQuery(localSearch.trim()));
+    navigate('/customer/shop');
   };
 
   const handleAddToCart = (product: CustomerProduct) => {
