@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useAppSelector } from '@hooks/useAppSelector';
+import { useToast } from '@hooks/useToast';
 import { printReceipt, downloadReceiptText } from '@utils/receipt';
 import axios from 'axios';
 
@@ -76,6 +77,7 @@ type ViewMode = 'grid' | 'list';
 
 export const POSInterface: React.FC = () => {
   const { token, user } = useAppSelector((state) => state.auth);
+  const { error: toastError, warning: toastWarning } = useToast();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -133,9 +135,8 @@ export const POSInterface: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching branches:', error);
-      console.error('Error details:', error.response?.data);
-      // Show user-friendly error
-      alert('Failed to load branches. Please check console for details or contact administrator.');
+      console.error('Error details:', (error as any).response?.data);
+      toastError('Failed to load branches. Please check console for details or contact administrator.');
     }
   };
 
@@ -151,46 +152,46 @@ export const POSInterface: React.FC = () => {
 
   // Use real products if available, otherwise show recent/favorites from mock
   const displayProducts = products.length > 0 ? products : [];
-  
+
   const filteredProducts = displayProducts.filter((product) => {
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.barcode && product.barcode.includes(searchQuery));
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const recentProducts = products.length > 0 
+  const recentProducts = products.length > 0
     ? products.slice(0, 4).map(p => ({
-        id: p.id,
-        name: p.name,
-        price: p.price,
-        image: p.image,
-        barcode: p.barcode || '000000'
-      }))
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      image: p.image,
+      barcode: p.barcode || '000000'
+    }))
     : [
-        { id: '1', name: 'Fresh Milk', price: 2.99, image: null, barcode: '123456' },
-        { id: '2', name: 'White Bread', price: 1.99, image: null, barcode: '123457' },
-        { id: '3', name: 'Apple', price: 0.99, image: null, barcode: '123458' },
-        { id: '4', name: 'Orange Juice', price: 3.49, image: null, barcode: '123459' },
-      ];
+      { id: '1', name: 'Fresh Milk', price: 2.99, image: null, barcode: '123456' },
+      { id: '2', name: 'White Bread', price: 1.99, image: null, barcode: '123457' },
+      { id: '3', name: 'Apple', price: 0.99, image: null, barcode: '123458' },
+      { id: '4', name: 'Orange Juice', price: 3.49, image: null, barcode: '123459' },
+    ];
 
   const favoriteProducts = products.length > 0
     ? products.slice(4, 6).map(p => ({
-        id: p.id,
-        name: p.name,
-        price: p.price,
-        image: p.image,
-        barcode: p.barcode || '000000'
-      }))
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      image: p.image,
+      barcode: p.barcode || '000000'
+    }))
     : [
-        { id: '5', name: 'Coca Cola', price: 1.49, image: null, barcode: '123460' },
-        { id: '6', name: 'Butter', price: 4.99, image: null, barcode: '123461' },
-      ];
+      { id: '5', name: 'Coca Cola', price: 1.49, image: null, barcode: '123460' },
+      { id: '6', name: 'Butter', price: 4.99, image: null, barcode: '123461' },
+    ];
 
   const addToCart = (product: any) => {
     const existingItem = cart.find((item) => item.productId === product.id);
-    
+
     if (existingItem) {
       setCart(cart.map((item) =>
         item.productId === product.id
@@ -261,19 +262,19 @@ export const POSInterface: React.FC = () => {
 
   const processPayment = async () => {
     if (!selectedBranch) {
-      alert('Please select a branch before processing payment. If no branches are available, please contact your administrator.');
+      toastWarning('Please select a branch before processing payment.');
       return;
     }
 
     if (cart.length === 0) {
-      alert('Please add items to cart before processing payment');
+      toastWarning('Please add items to cart before processing payment');
       return;
     }
 
     if (paymentMethod === 'cash') {
       const received = parseFloat(cashReceived) || 0;
       if (received < calculateTotal()) {
-        alert('Insufficient cash received');
+        toastWarning('Insufficient cash received');
         return;
       }
     }
@@ -294,8 +295,8 @@ export const POSInterface: React.FC = () => {
         })),
         payments: [{
           method: paymentMethod,
-          amount: paymentMethod === 'cash' 
-            ? parseFloat(cashReceived) 
+          amount: paymentMethod === 'cash'
+            ? parseFloat(cashReceived)
             : calculateTotal(),
           reference: paymentMethod === 'mpesa' ? `MPESA-${Date.now()}` : undefined,
         }],
@@ -303,8 +304,8 @@ export const POSInterface: React.FC = () => {
         tax: calculateTax(),
         discount: 0,
         total: calculateTotal(),
-        amountPaid: paymentMethod === 'cash' 
-          ? parseFloat(cashReceived) 
+        amountPaid: paymentMethod === 'cash'
+          ? parseFloat(cashReceived)
           : calculateTotal(),
         changeAmount: calculateChange(),
         notes: customer ? `Customer: ${customer.name}` : undefined,
@@ -320,7 +321,7 @@ export const POSInterface: React.FC = () => {
       );
 
       const sale = response.data?.data;
-      
+
       if (sale) {
         setLastSale({
           id: sale.id,
@@ -338,7 +339,7 @@ export const POSInterface: React.FC = () => {
     } catch (error: any) {
       console.error('Payment processing error:', error);
       const errorMessage = error.response?.data?.message || 'Payment failed. Please try again.';
-      alert(errorMessage);
+      toastError(errorMessage);
     } finally {
       setProcessing(false);
     }
@@ -348,7 +349,7 @@ export const POSInterface: React.FC = () => {
     if (!lastSale) return;
 
     const branch = branches.find(b => b.id === selectedBranch);
-    
+
     printReceipt({
       saleNumber: lastSale.saleNumber,
       date: new Date(lastSale.createdAt),
@@ -380,7 +381,7 @@ export const POSInterface: React.FC = () => {
     if (!lastSale) return;
 
     const branch = branches.find(b => b.id === selectedBranch);
-    
+
     downloadReceiptText({
       saleNumber: lastSale.saleNumber,
       date: new Date(lastSale.createdAt),
@@ -427,7 +428,7 @@ export const POSInterface: React.FC = () => {
                 Point of Sale
               </h1>
             </div>
-            
+
             {/* Branch Selector - Prominent */}
             {branches.length > 0 ? (
               <div className="flex items-center gap-2">
@@ -459,7 +460,7 @@ export const POSInterface: React.FC = () => {
                 </button>
               </div>
             )}
-            
+
             {customer && (
               <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <User className="w-4 h-4 text-blue-600" />
@@ -524,7 +525,7 @@ export const POSInterface: React.FC = () => {
                   <span>{category.name}</span>
                 </button>
               ))}
-              
+
               <div className="ml-auto flex items-center gap-2">
                 <button
                   onClick={() => setViewMode('grid')}
@@ -692,7 +693,7 @@ export const POSInterface: React.FC = () => {
                     <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center shrink-0">
                       <Package className="w-8 h-8 text-gray-400" />
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -705,7 +706,7 @@ export const POSInterface: React.FC = () => {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      
+
                       <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mt-1">
                         KES {item.price.toFixed(2)}
                       </p>

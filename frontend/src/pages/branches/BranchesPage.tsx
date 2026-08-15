@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
-import { Plus, Building2, X, Edit, Trash2 } from 'lucide-react';
+import { Plus, Building2, X, Edit, Trash2, Loader2 } from 'lucide-react';
 import { useAppSelector } from '@hooks/useAppSelector';
+import { useToast } from '@hooks/useToast';
 import axios from 'axios';
 
 interface Branch {
@@ -19,8 +20,10 @@ interface Branch {
 
 export const BranchesPage: React.FC = () => {
   const { token } = useAppSelector((state) => state.auth);
+  const { success, error: toastError } = useToast();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const [formData, setFormData] = useState({
@@ -46,19 +49,15 @@ export const BranchesPage: React.FC = () => {
         params: { limit: 100 }
       });
       
-      console.log('Branches response:', response.data);
-      
       if (response.data?.success && response.data?.data) {
         setBranches(Array.isArray(response.data.data) ? response.data.data : []);
       } else {
         setBranches([]);
       }
-    } catch (error: any) {
-      console.error('Error fetching branches:', error);
-      console.error('Error response:', error.response?.data);
-      
-      const errorMessage = error.response?.data?.message || 'Failed to load branches';
-      alert(`Error: ${errorMessage}`);
+    } catch (err: any) {
+      console.error('Error fetching branches:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to load branches';
+      toastError(errorMessage);
       setBranches([]);
     } finally {
       setLoading(false);
@@ -67,53 +66,42 @@ export const BranchesPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     
     try {
-      console.log('=== BRANCH SUBMISSION START ===');
-      console.log('Form data:', formData);
-      console.log('API URL:', `${import.meta.env.VITE_API_BASE_URL}/v1/branches`);
-      console.log('Token:', token ? 'Present' : 'Missing');
-      
       if (editingBranch) {
-        console.log('Updating branch:', editingBranch.id);
         const response = await axios.put(
           `${import.meta.env.VITE_API_BASE_URL}/v1/branches/${editingBranch.id}`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        console.log('Update response:', response.data);
-        alert('Branch updated successfully');
+        const updated = response.data?.data || { ...editingBranch, ...formData };
+        setBranches((prev) => prev.map((b) => (b.id === editingBranch.id ? updated : b)));
+        success('Branch updated successfully');
       } else {
-        console.log('Creating new branch...');
         const response = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/v1/branches`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        console.log('Create response:', response.data);
-        alert('Branch created successfully');
+        const newBranch = response.data?.data || { id: Date.now().toString(), ...formData, isActive: true };
+        setBranches((prev) => [newBranch, ...prev]);
+        success('Branch created successfully!');
       }
       
-      console.log('=== BRANCH SUBMISSION SUCCESS ===');
       setShowModal(false);
       resetForm();
       fetchBranches();
-    } catch (error: any) {
-      console.error('=== BRANCH SUBMISSION ERROR ===');
-      console.error('Error object:', error);
-      console.error('Error response:', error.response);
-      console.error('Error response data:', error.response?.data);
-      console.error('Error message:', error.message);
-      console.error('Error config:', error.config);
-      
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.errors?.[0]?.message ||
-                          error.response?.data?.errors?.[0] || 
-                          error.message ||
+    } catch (err: any) {
+      console.error('Error saving branch:', err);
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.errors?.[0]?.message ||
+                          err.response?.data?.errors?.[0] || 
+                          err.message ||
                           'Failed to save branch';
-      
-      console.error('Final error message:', errorMessage);
-      alert(`Error: ${errorMessage}`);
+      toastError(errorMessage);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -138,11 +126,11 @@ export const BranchesPage: React.FC = () => {
         `${import.meta.env.VITE_API_BASE_URL}/v1/branches/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert('Branch deleted successfully');
-      fetchBranches();
-    } catch (error: any) {
-      console.error('Error deleting branch:', error);
-      alert(error.response?.data?.message || 'Failed to delete branch');
+      setBranches((prev) => prev.filter((b) => b.id !== id));
+      success('Branch deleted successfully');
+    } catch (err: any) {
+      console.error('Error deleting branch:', err);
+      toastError(err.response?.data?.message || 'Failed to delete branch');
     }
   };
 
@@ -176,7 +164,10 @@ export const BranchesPage: React.FC = () => {
       {loading ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Loading branches...</p>
+            <div className="flex justify-center items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <span>Loading branches...</span>
+            </div>
           </CardContent>
         </Card>
       ) : branches.length === 0 ? (
@@ -196,11 +187,11 @@ export const BranchesPage: React.FC = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {branches.map((branch) => (
-            <Card key={branch.id}>
+            <Card key={branch.id} className="transition-all hover:shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5" />
+                    <Building2 className="h-5 w-5 text-primary" />
                     {branch.name}
                   </span>
                   <div className="flex gap-2">
@@ -223,7 +214,7 @@ export const BranchesPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 text-sm">
-                  <div><span className="font-medium">Code:</span> {branch.code}</div>
+                  <div><span className="font-medium">Code:</span> <code className="bg-muted px-1.5 py-0.5 rounded text-xs">{branch.code}</code></div>
                   {branch.phone && <div><span className="font-medium">Phone:</span> {branch.phone}</div>}
                   {branch.email && <div><span className="font-medium">Email:</span> {branch.email}</div>}
                   {branch.city && <div><span className="font-medium">City:</span> {branch.city}</div>}
@@ -323,11 +314,19 @@ export const BranchesPage: React.FC = () => {
                     type="button"
                     variant="outline"
                     onClick={() => { setShowModal(false); resetForm(); }}
+                    disabled={submitting}
                   >
                     Cancel
                   </Button>
-                  <Button type="submit">
-                    {editingBranch ? 'Update' : 'Create'} Branch
+                  <Button type="submit" disabled={submitting}>
+                    {submitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>{editingBranch ? 'Update' : 'Create'} Branch</>
+                    )}
                   </Button>
                 </div>
               </form>
