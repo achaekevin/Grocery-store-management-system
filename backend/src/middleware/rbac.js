@@ -1,6 +1,53 @@
 import ApiError from '../utils/ApiError.js';
 
 /**
+ * Role permissions dictionary for seamless fallback when explicit DB permissions are unpopulated
+ */
+const DEFAULT_ROLE_PERMISSIONS = {
+  'Super Admin': ['*'],
+  'Admin': ['*'],
+  'Branch Manager': ['*'],
+  'Manager': ['*'],
+  'Inventory Clerk': [
+    'suppliers:*',
+    'suppliers:read',
+    'suppliers:create',
+    'suppliers:update',
+    'products:*',
+    'products:read',
+    'inventory:*',
+    'inventory:read',
+    'purchase-orders:*',
+    'stock-transfers:*',
+    'reports:read',
+    'dashboard:read',
+  ],
+  'Cashier': [
+    'pos:*',
+    'sales:*',
+    'products:read',
+    'customers:*',
+    'customers:read',
+    'customers:create',
+    'mpesa:*',
+    'suppliers:read',
+    'dashboard:read',
+  ],
+  'Accountant': [
+    'financial:*',
+    'reports:*',
+    'sales:read',
+    'suppliers:read',
+    'customers:read',
+    'dashboard:read',
+  ],
+  'Customer': [
+    'customer:*',
+    'products:read',
+  ],
+};
+
+/**
  * Check if user has required role
  */
 export const requireRole = (...allowedRoles) => {
@@ -10,14 +57,14 @@ export const requireRole = (...allowedRoles) => {
         throw ApiError.unauthorized('Authentication required');
       }
 
-      const userRole = req.user.role?.name;
+      const userRole = typeof req.user.role === 'object' ? req.user.role?.name : req.user.role;
 
       if (!userRole) {
         throw ApiError.forbidden('User has no role assigned');
       }
 
-      // Super Admin has access to everything
-      if (userRole === 'Super Admin') {
+      // Super Admin and Admin have access to everything
+      if (userRole === 'Super Admin' || userRole === 'Admin') {
         return next();
       }
 
@@ -54,30 +101,49 @@ export const requirePermission = (permissionString) => {
         throw ApiError.unauthorized('Authentication required');
       }
 
-      const userRole = req.user.role?.name;
+      const userRole = typeof req.user.role === 'object' ? req.user.role?.name : req.user.role;
 
-      // Super Admin has all permissions
-      if (userRole === 'Super Admin') {
+      // Super Admin, Admin, Branch Manager, and Manager have access to all modules
+      if (
+        userRole === 'Super Admin' ||
+        userRole === 'Admin' ||
+        userRole === 'Branch Manager' ||
+        userRole === 'Manager'
+      ) {
         return next();
       }
 
       const permissions = req.user.role?.permissions || [];
-      
-      // Support both 'module:action' and 'module.action' formats
       const normalizedPermission = permissionString.replace(':', '.');
 
-      const hasPermission = permissions.some(
-        (p) => p.name === normalizedPermission || p.name === permissionString
+      // 1. Check explicit permissions in user role
+      const hasExplicitPermission = permissions.some(
+        (p) => p.name === normalizedPermission || p.name === permissionString || p.name === '*'
       );
 
-      if (!hasPermission) {
-        const [module, action] = permissionString.split(/[:.]/);
-        throw ApiError.forbidden(
-          `You don't have permission to ${action} ${module}`
-        );
+      if (hasExplicitPermission) {
+        return next();
       }
 
-      next();
+      // 2. Check default role permissions mapping
+      const roleDefaults = DEFAULT_ROLE_PERMISSIONS[userRole] || [];
+      const [module, action] = permissionString.split(/[:.]/);
+
+      const hasDefaultPermission = roleDefaults.some(
+        (perm) =>
+          perm === '*' ||
+          perm === permissionString ||
+          perm === `${module}:*` ||
+          perm === `${module}.${action}`
+      );
+
+      if (hasDefaultPermission) {
+        return next();
+      }
+
+      throw ApiError.forbidden(
+        `You don't have permission to ${action || 'access'} ${module || permissionString}`
+      );
     } catch (error) {
       if (error instanceof ApiError) {
         return res.status(error.statusCode).json({
@@ -107,17 +173,14 @@ export const requireSameTenant = (req, res, next) => {
 
     const userTenantId = req.user.tenantId;
 
-    // Check in params
     if (req.params.tenantId && req.params.tenantId !== userTenantId) {
       throw ApiError.forbidden('Access denied to this tenant');
     }
 
-    // Check in body
     if (req.body.tenantId && req.body.tenantId !== userTenantId) {
       throw ApiError.forbidden('Access denied to this tenant');
     }
 
-    // Check in query
     if (req.query.tenantId && req.query.tenantId !== userTenantId) {
       throw ApiError.forbidden('Access denied to this tenant');
     }
@@ -149,17 +212,16 @@ export const requireBranchAccess = (req, res, next) => {
       throw ApiError.unauthorized('Authentication required');
     }
 
-    const userRole = req.user.role?.name;
+    const userRole = typeof req.user.role === 'object' ? req.user.role?.name : req.user.role;
 
-    // Super Admin and Branch Manager have access to all branches in their business
-    if (['Super Admin', 'Branch Manager'].includes(userRole)) {
+    if (['Super Admin', 'Admin', 'Branch Manager', 'Manager'].includes(userRole)) {
       return next();
     }
 
     const userBranchId = req.user.branchId;
     const requestedBranchId = req.params.branchId || req.body.branchId || req.query.branchId;
 
-    if (requestedBranchId && parseInt(requestedBranchId) !== userBranchId) {
+    if (requestedBranchId && userBranchId && requestedBranchId !== userBranchId) {
       throw ApiError.forbidden('Access denied to this branch');
     }
 

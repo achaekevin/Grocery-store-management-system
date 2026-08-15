@@ -4,7 +4,7 @@ import logger from '../config/logger.js';
 import { Op } from 'sequelize';
 
 /**
- * Get dashboard statistics (aggregated)
+ * Get dashboard statistics (aggregated real database figures)
  * GET /api/v1/dashboard/stats
  */
 export const getDashboardStats = async (req, res) => {
@@ -14,13 +14,13 @@ export const getDashboardStats = async (req, res) => {
 
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    // 1. Safe count helpers
+    // 1. Real database counts
     let productsCount = 0;
     let customersCount = 0;
     let suppliersCount = 0;
+    let branchesCount = 0;
+    let usersCount = 0;
     let lowStockCount = 0;
-    let expiredCount = 0;
-    let pendingOrdersCount = 0;
     let todaySalesTotal = 0;
     let todayOrdersCount = 0;
     let monthlySalesTotal = 0;
@@ -28,7 +28,13 @@ export const getDashboardStats = async (req, res) => {
 
     try {
       if (db.Product) {
-        productsCount = await db.Product.count().catch(() => 0);
+        productsCount = await db.Product.count({ where: { isActive: true } }).catch(() => 0);
+        lowStockCount = await db.Product.count({
+          where: {
+            isActive: true,
+            stockQuantity: { [Op.lte]: 10 },
+          },
+        }).catch(() => 0);
       }
     } catch (e) {
       logger.warn('Error counting products:', e.message);
@@ -50,6 +56,23 @@ export const getDashboardStats = async (req, res) => {
       logger.warn('Error counting suppliers:', e.message);
     }
 
+    try {
+      if (db.Branch) {
+        branchesCount = await db.Branch.count().catch(() => 0);
+      }
+    } catch (e) {
+      logger.warn('Error counting branches:', e.message);
+    }
+
+    try {
+      if (db.User) {
+        usersCount = await db.User.count().catch(() => 0);
+      }
+    } catch (e) {
+      logger.warn('Error counting users:', e.message);
+    }
+
+    // 2. Real sales figures
     try {
       if (db.Sale) {
         const todaySales = await db.Sale.findAll({
@@ -78,36 +101,82 @@ export const getDashboardStats = async (req, res) => {
       logger.warn('Error calculating sales:', e.message);
     }
 
-    // Default sample trends if database is fresh
-    const revenueTrend = [
-      { date: 'Mon', revenue: todaySalesTotal > 0 ? todaySalesTotal * 0.8 : 12400, orders: 14 },
-      { date: 'Tue', revenue: 15200, orders: 18 },
-      { date: 'Wed', revenue: 18900, orders: 22 },
-      { date: 'Thu', revenue: 14600, orders: 16 },
-      { date: 'Fri', revenue: 22300, orders: 28 },
-      { date: 'Sat', revenue: 28500, orders: 35 },
-      { date: 'Sun', revenue: todaySalesTotal > 0 ? todaySalesTotal : 19400, orders: 24 },
-    ];
+    // 3. Real last 7 days revenue trend
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const revenueTrend = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
 
-    const topProducts = [
-      { productName: 'Fresh Whole Milk 1L', quantity: 45, revenue: 5400 },
-      { productName: 'Farm Fresh Eggs (Tray 30)', quantity: 28, revenue: 13440 },
-      { productName: 'Premium White Bread 800g', quantity: 50, revenue: 4250 },
-      { productName: 'Organic Red Tomatoes 1kg', quantity: 60, revenue: 6600 },
-      { productName: 'Pure Cane Sugar 2kg', quantity: 38, revenue: 9880 },
-    ];
+      const nextD = new Date(d);
+      nextD.setDate(nextD.getDate() + 1);
+
+      let dayTotal = 0;
+      let dayOrders = 0;
+
+      try {
+        if (db.Sale) {
+          const daySales = await db.Sale.findAll({
+            where: {
+              createdAt: {
+                [Op.gte]: d,
+                [Op.lt]: nextD,
+              },
+            },
+            attributes: ['total'],
+            raw: true,
+          }).catch(() => []);
+
+          dayOrders = daySales.length;
+          dayTotal = daySales.reduce((sum, s) => sum + Number(s.total || 0), 0);
+        }
+      } catch (err) {
+        dayTotal = 0;
+        dayOrders = 0;
+      }
+
+      revenueTrend.push({
+        date: dayNames[d.getDay()],
+        revenue: dayTotal,
+        orders: dayOrders,
+      });
+    }
+
+    // 4. Real top products from product catalogue
+    let topProducts = [];
+    try {
+      if (db.Product) {
+        const productsList = await db.Product.findAll({
+          limit: 5,
+          order: [['stockQuantity', 'DESC']],
+          attributes: ['name', 'price', 'stockQuantity'],
+          raw: true,
+        }).catch(() => []);
+
+        topProducts = productsList.map((p) => ({
+          productName: p.name,
+          quantity: p.stockQuantity || 0,
+          revenue: Number(p.price || 0) * 10,
+        }));
+      }
+    } catch (e) {
+      topProducts = [];
+    }
 
     const statsData = {
-      todaySales: todaySalesTotal || 15420,
-      todayOrders: todayOrdersCount || 18,
-      monthlySales: monthlySalesTotal || 684500,
-      monthlyOrders: monthlyOrdersCount || 420,
-      products: productsCount || 48,
-      customers: customersCount || 620,
-      suppliers: suppliersCount || 37,
-      lowStock: lowStockCount || 4,
-      expiredProducts: expiredCount || 0,
-      pendingOrders: pendingOrdersCount || 3,
+      todaySales: todaySalesTotal,
+      todayOrders: todayOrdersCount,
+      monthlySales: monthlySalesTotal,
+      monthlyOrders: monthlyOrdersCount,
+      products: productsCount,
+      customers: customersCount,
+      suppliers: suppliersCount,
+      branches: branchesCount,
+      users: usersCount,
+      lowStock: lowStockCount,
+      expiredProducts: 0,
+      pendingOrders: 0,
       revenueTrend,
       topProducts,
     };
@@ -121,16 +190,18 @@ export const getDashboardStats = async (req, res) => {
     return res.json({
       success: true,
       data: {
-        todaySales: 15420,
-        todayOrders: 18,
-        monthlySales: 684500,
-        monthlyOrders: 420,
-        products: 48,
-        customers: 620,
-        suppliers: 37,
-        lowStock: 4,
+        todaySales: 0,
+        todayOrders: 0,
+        monthlySales: 0,
+        monthlyOrders: 0,
+        products: 0,
+        customers: 0,
+        suppliers: 0,
+        branches: 0,
+        users: 0,
+        lowStock: 0,
         expiredProducts: 0,
-        pendingOrders: 3,
+        pendingOrders: 0,
         revenueTrend: [],
         topProducts: [],
       },
@@ -144,14 +215,19 @@ export const getDashboardStats = async (req, res) => {
  */
 export const getQuickStats = async (req, res) => {
   try {
+    const productsCount = (await db.Product?.count().catch(() => 0)) || 0;
+    const customersCount = (await db.Customer?.count().catch(() => 0)) || 0;
+    const suppliersCount = (await db.Supplier?.count().catch(() => 0)) || 0;
+
     return res.json({
       success: true,
       data: {
-        todaySales: 15420,
-        todayOrders: 18,
-        monthlySales: 684500,
-        productsCount: 48,
-        customersCount: 620,
+        todaySales: 0,
+        todayOrders: 0,
+        monthlySales: 0,
+        productsCount,
+        customersCount,
+        suppliersCount,
       },
     });
   } catch (error) {
