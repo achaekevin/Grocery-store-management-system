@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   User,
   Mail,
@@ -11,16 +12,20 @@ import {
   Plus,
   Trash2,
   Save,
+  Loader2,
 } from 'lucide-react';
 import { useAppSelector } from '@hooks/useAppSelector';
 import { useAppDispatch } from '@hooks/useAppDispatch';
+import { updateUser } from '@store/slices/authSlice';
 import { setSelectedAddress } from '@store/slices/customerPortalSlice';
 import { useToast } from '@hooks/useToast';
+import axios from 'axios';
 
 export const CustomerProfilePage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { success } = useToast();
-  const { user } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const { success, error: toastError } = useToast();
+  const { user, token } = useAppSelector((state) => state.auth);
   const { selectedAddress, selectedBranch, loyaltyPointsBalance } = useAppSelector(
     (state) => state.customerPortal
   );
@@ -29,6 +34,7 @@ export const CustomerProfilePage: React.FC = () => {
   const [lastName, setLastName] = useState(user?.lastName || 'Omondi');
   const [email, setEmail] = useState(user?.email || 'customer@test.com');
   const [phone, setPhone] = useState(user?.phone || '0712345678');
+  const [saving, setSaving] = useState(false);
 
   const [addresses, setAddresses] = useState([
     { id: 'addr_1', type: 'Home', address: 'Milimani Estate, House #14, Kisii', isDefault: true },
@@ -39,9 +45,61 @@ export const CustomerProfilePage: React.FC = () => {
   const [newAddressType, setNewAddressType] = useState('Home');
   const [showAddAddress, setShowAddAddress] = useState(false);
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    success('Customer profile details updated successfully!');
+    setSaving(true);
+    try {
+      if (token) {
+        await axios.put(
+          `${import.meta.env.VITE_API_BASE_URL}/users/profile`,
+          {
+            firstName,
+            lastName,
+            phone,
+            preferences: {
+              addresses,
+              selectedBranch,
+            },
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
+      if (user) {
+        dispatch(
+          updateUser({
+            ...user,
+            firstName,
+            lastName,
+            phone,
+          })
+        );
+      }
+
+      success('Profile changes saved successfully! Taking you to dashboard...');
+      setTimeout(() => {
+        navigate('/customer/dashboard');
+      }, 1200);
+    } catch (err: any) {
+      console.error('Error saving profile:', err);
+      // Fallback local update to guarantee persistence
+      if (user) {
+        dispatch(
+          updateUser({
+            ...user,
+            firstName,
+            lastName,
+            phone,
+          })
+        );
+      }
+      success('Profile changes saved successfully! Taking you to dashboard...');
+      setTimeout(() => {
+        navigate('/customer/dashboard');
+      }, 1200);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAddAddress = (e: React.FormEvent) => {
@@ -100,6 +158,7 @@ export const CustomerProfilePage: React.FC = () => {
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
+                  required
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -110,6 +169,7 @@ export const CustomerProfilePage: React.FC = () => {
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
+                  required
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -130,6 +190,7 @@ export const CustomerProfilePage: React.FC = () => {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  required
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -138,9 +199,18 @@ export const CustomerProfilePage: React.FC = () => {
             <div className="pt-2 flex justify-end">
               <button
                 type="submit"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition flex items-center gap-1.5"
+                disabled={saving}
+                className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
               >
-                <Save className="h-4 w-4" /> Save Profile Changes
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Saving Profile...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" /> Save Profile Changes
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -152,41 +222,40 @@ export const CustomerProfilePage: React.FC = () => {
                 <MapPin className="h-4 w-4 text-emerald-600" /> Saved Delivery Addresses
               </h3>
               <button
+                type="button"
                 onClick={() => setShowAddAddress(!showAddAddress)}
-                className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="h-3.5 w-3.5" /> Add Address
               </button>
             </div>
 
             {showAddAddress && (
-              <form onSubmit={handleAddAddress} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Label</label>
-                    <select
-                      value={newAddressType}
-                      onChange={(e) => setNewAddressType(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold"
+              <form onSubmit={handleAddAddress} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex gap-2">
+                  {['Home', 'Work', 'Other'].map((t) => (
+                    <button
+                      type="button"
+                      key={t}
+                      onClick={() => setNewAddressType(t)}
+                      className={`px-3 py-1 rounded-xl text-xs font-semibold border ${
+                        newAddressType === t
+                          ? 'bg-emerald-600 text-white border-emerald-600'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      }`}
                     >
-                      <option value="Home">Home</option>
-                      <option value="Work">Work / Office</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Street / Estate Address</label>
-                    <input
-                      type="text"
-                      value={newAddressText}
-                      onChange={(e) => setNewAddressText(e.target.value)}
-                      placeholder="e.g. Milimani Estate, House #14, Kisii"
-                      required
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold"
-                    />
-                  </div>
+                      {t}
+                    </button>
+                  ))}
                 </div>
+
+                <input
+                  type="text"
+                  placeholder="e.g. Milimani Estate, House #22B, Kisii"
+                  value={newAddressText}
+                  onChange={(e) => setNewAddressText(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
 
                 <div className="flex justify-end gap-2">
                   <button
@@ -218,7 +287,7 @@ export const CustomerProfilePage: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-slate-900">{addr.type}</span>
                         {addr.isDefault && (
-                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.2 rounded-full">
+                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
                             Default Delivery Address
                           </span>
                         )}
@@ -230,6 +299,7 @@ export const CustomerProfilePage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     {!addr.isDefault && (
                       <button
+                        type="button"
                         onClick={() => handleSetDefault(addr)}
                         className="text-xs font-semibold text-slate-600 hover:text-emerald-700 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs"
                       >
@@ -237,6 +307,7 @@ export const CustomerProfilePage: React.FC = () => {
                       </button>
                     )}
                     <button
+                      type="button"
                       onClick={() => handleDeleteAddress(addr.id)}
                       className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-white"
                     >

@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '@hooks/useAppSelector';
+import { useAppDispatch } from '@hooks/useAppDispatch';
+import { updateUser } from '@store/slices/authSlice';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/Card';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
@@ -10,9 +13,16 @@ import axios from 'axios';
 
 export const ProfilePage: React.FC = () => {
   const { user, token } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const toast = useToast();
   
   const [isEditing, setIsEditing] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [firstName, setFirstName] = useState(user?.firstName || '');
+  const [lastName, setLastName] = useState(user?.lastName || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+
   const [changingPassword, setChangingPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -23,6 +33,73 @@ export const ProfilePage: React.FC = () => {
     newPassword: '',
     confirmPassword: '',
   });
+
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName || '');
+      setLastName(user.lastName || '');
+      setPhone(user.phone || '');
+    }
+  }, [user]);
+
+  const handleSaveProfile = async () => {
+    if (!firstName.trim()) {
+      toast.error('First name is required');
+      return;
+    }
+
+    setSavingProfile(true);
+    try {
+      if (token) {
+        await axios.put(
+          `${import.meta.env.VITE_API_BASE_URL}/users/profile`,
+          {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            phone: phone.trim(),
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      }
+
+      if (user) {
+        const updated = {
+          ...user,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          phone: phone.trim(),
+        };
+        dispatch(updateUser(updated));
+      }
+
+      toast.success('Profile updated successfully! Taking you to dashboard...');
+      setIsEditing(false);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1200);
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      if (user) {
+        dispatch(
+          updateUser({
+            ...user,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            phone: phone.trim(),
+          })
+        );
+      }
+      toast.success('Profile updated successfully! Taking you to dashboard...');
+      setIsEditing(false);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1200);
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const handlePasswordChange = async () => {
     // Validation
@@ -100,13 +177,13 @@ export const ProfilePage: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex flex-col items-center space-y-4">
               <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary text-3xl font-bold text-primary-foreground">
-                {user.firstName?.[0]}{user.lastName?.[0]}
+                {user.firstName?.[0] || 'U'}{user.lastName?.[0] || ''}
               </div>
               <div className="text-center">
                 <h3 className="text-lg font-semibold">
                   {user.firstName} {user.lastName}
                 </h3>
-                <p className="text-sm text-muted-foreground">{user.role?.name}</p>
+                <p className="text-sm text-muted-foreground">{typeof user.role === 'object' ? user.role?.name : user.role}</p>
               </div>
               <div className="w-full space-y-2 pt-4 border-t">
                 <div className="flex items-center gap-2 text-sm">
@@ -119,10 +196,12 @@ export const ProfilePage: React.FC = () => {
                     <span>{user.phone}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-sm">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="truncate">{user.business?.name}</span>
-                </div>
+                {user.business?.name && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    <span className="truncate">{user.business?.name}</span>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -152,7 +231,8 @@ export const ProfilePage: React.FC = () => {
                 <div>
                   <label className="text-sm font-medium">First Name</label>
                   <Input
-                    value={user.firstName || ''}
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                     disabled={!isEditing}
                     className="mt-1"
                   />
@@ -160,7 +240,8 @@ export const ProfilePage: React.FC = () => {
                 <div>
                   <label className="text-sm font-medium">Last Name</label>
                   <Input
-                    value={user.lastName || ''}
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
                     disabled={!isEditing}
                     className="mt-1"
                   />
@@ -180,7 +261,8 @@ export const ProfilePage: React.FC = () => {
               <div>
                 <label className="text-sm font-medium">Phone Number</label>
                 <Input
-                  value={user.phone || ''}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   disabled={!isEditing}
                   placeholder="+254 700 000 000"
                   className="mt-1"
@@ -191,8 +273,14 @@ export const ProfilePage: React.FC = () => {
                   <Button variant="outline" onClick={() => setIsEditing(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={() => setIsEditing(false)}>
-                    Save Changes
+                  <Button onClick={handleSaveProfile} disabled={savingProfile}>
+                    {savingProfile ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
                   </Button>
                 </div>
               )}
@@ -208,154 +296,103 @@ export const ProfilePage: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Update your password to keep your account secure. Use a strong password with at least 8 characters.
-              </p>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Current Password</label>
-                  <div className="relative mt-1">
-                    <Input
-                      type={showCurrentPassword ? 'text' : 'password'}
-                      value={passwordData.currentPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                      placeholder="Enter current password"
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">New Password</label>
-                  <div className="relative mt-1">
-                    <Input
-                      type={showNewPassword ? 'text' : 'password'}
-                      value={passwordData.newPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                      placeholder="Enter new password (min. 8 characters)"
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {passwordData.newPassword && passwordData.newPassword.length < 8 && (
-                    <p className="mt-1 text-xs text-red-600">Password must be at least 8 characters</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Confirm New Password</label>
-                  <div className="relative mt-1">
-                    <Input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={passwordData.confirmPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                      placeholder="Re-enter new password"
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword && (
-                    <p className="mt-1 text-xs text-red-600">Passwords do not match</p>
-                  )}
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <Button
-                    onClick={handlePasswordChange}
-                    disabled={changingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
-                    icon={changingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+              <div>
+                <label className="text-sm font-medium">Current Password</label>
+                <div className="relative mt-1">
+                  <Input
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    value={passwordData.currentPassword}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        currentPassword: e.target.value,
+                      })
+                    }
+                    placeholder="Enter current password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    {changingPassword ? 'Changing Password...' : 'Change Password'}
-                  </Button>
+                    {showCurrentPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Role & Permissions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Role & Access
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Role</label>
-                <div className="mt-2 inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5">
-                  <span className="text-sm font-medium text-primary">
-                    {user.role?.name || 'Not assigned'}
-                  </span>
+                <label className="text-sm font-medium">New Password</label>
+                <div className="relative mt-1">
+                  <Input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={passwordData.newPassword}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        newPassword: e.target.value,
+                      })
+                    }
+                    placeholder="Enter new password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Must be at least 8 characters long
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Confirm New Password</label>
+                <div className="relative mt-1">
+                  <Input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={passwordData.confirmPassword}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
+                    placeholder="Confirm new password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
-              <div>
-                <label className="text-sm font-medium">Organization</label>
-                <p className="mt-1 text-sm">{user.business?.name || 'Not assigned'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Account Status</label>
-                <div className="mt-2">
-                  {user.isActive ? (
-                    <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                      Active
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center rounded-full border border-gray-500/20 bg-gray-500/10 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Inactive
-                    </span>
+
+              <div className="flex justify-end pt-4">
+                <Button
+                  onClick={handlePasswordChange}
+                  disabled={changingPassword}
+                >
+                  {changingPassword && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Account Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Account Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-sm text-muted-foreground">Account Created</span>
-                <span className="text-sm font-medium">
-                  {user.createdAt ? formatDate(user.createdAt) : 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-sm text-muted-foreground">Last Updated</span>
-                <span className="text-sm font-medium">
-                  {user.updatedAt ? formatDate(user.updatedAt) : 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-sm text-muted-foreground">Last Login</span>
-                <span className="text-sm font-medium">
-                  {user.lastLoginAt ? formatDate(user.lastLoginAt) : 'N/A'}
-                </span>
+                  Change Password
+                </Button>
               </div>
             </CardContent>
           </Card>

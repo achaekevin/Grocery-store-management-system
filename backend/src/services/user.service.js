@@ -155,15 +155,25 @@ export const updateProfile = async (userId, updateData) => {
     throw ApiError.notFound('User not found');
   }
 
-  // Only allow specific fields
-  const allowedFields = ['name', 'phone', 'avatar'];
+  let firstName = updateData.firstName;
+  let lastName = updateData.lastName;
+  if (!firstName && updateData.name) {
+    const parts = updateData.name.trim().split(' ');
+    firstName = parts[0];
+    lastName = parts.slice(1).join(' ');
+  }
+
   const filteredData = {};
-  
-  allowedFields.forEach((field) => {
-    if (updateData[field] !== undefined) {
-      filteredData[field] = updateData[field];
-    }
-  });
+  if (firstName !== undefined) filteredData.firstName = firstName;
+  if (lastName !== undefined) filteredData.lastName = lastName;
+  if (updateData.phone !== undefined) filteredData.phone = updateData.phone;
+  if (updateData.avatar !== undefined) filteredData.avatar = updateData.avatar;
+  if (updateData.preferences !== undefined) {
+    filteredData.preferences = {
+      ...(user.preferences || {}),
+      ...updateData.preferences,
+    };
+  }
 
   await user.update(filteredData);
 
